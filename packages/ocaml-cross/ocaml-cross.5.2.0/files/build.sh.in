@@ -1,0 +1,142 @@
+#!/bin/bash
+
+set -e
+
+PREFIX=
+HOST_TRIPLE=
+CPU_COUNT=4
+SOURCE_DIR=`realpath ${PWD}`
+ZIG=zig
+
+usage () { echo "$0 -p <prefix> -t <host_triple> [-g <host_target>] [-c <cpu count>] [-s <sources_dir>] [-z <path_to_zig_executable>]"; exit 1; }
+
+while getopts ":hp:t:c:s:z:g:" option; do
+  case $option in
+    p)
+      PREFIX=${OPTARG}
+      ;;
+    t)
+      HOST_TRIPLE=${OPTARG}
+      ;;
+    c)
+      CPU_COUNT=${OPTARG}
+      ;;
+    s)
+      SOURCE_DIR=${OPTARG}
+      ;;
+    z)
+      ZIG=${OPTARG}
+      ;;
+    g)
+      HOST_TARGET=${OPTARG}
+      ;;
+    h | *)
+      usage
+    ;;
+  esac
+done
+
+echo "Build plan"
+echo "----------"
+echo ""
+echo "Prefix: ${PREFIX}"
+echo "Cores: ${CPU_COUNT}"
+echo "Host Triple: ${HOST_TRIPLE}"
+echo "Host Target: ${HOST_TARGET}"
+echo "Zig Compiler: ${ZIG}"
+
+if [ -z "${HOST_TRIPLE}" ]
+then
+  echo "Host triple not specified"
+  exit 1
+fi
+
+if [ -z "${PREFIX}" ]
+then
+  echo "Prefix directory not specified"
+  exit 1
+fi
+
+if [ ! -x "${ZIG}" ]
+then
+  echo "Zig binary not executable"
+  exit 1
+fi
+
+if [ ! -d "${SOURCE_DIR}"  ]
+then
+  echo "Sources directory not found."
+  exit 1
+fi
+
+boot_dir=${SOURCE_DIR}/boot
+boot_ocamlrun=${SOURCE_DIR}/boot/ocamlrun
+boot_ocamlc=${SOURCE_DIR}/boot/ocamlc
+boot_ocamlopt=${SOURCE_DIR}/boot/ocamlopt
+
+host_dir=${SOURCE_DIR}
+host_ocamlc=${host_dir}/ocamlc
+host_ocamlopt=${host_dir}/ocamlopt
+
+echo "--- Clean all configuration and previous builds"
+cd ${SOURCE_DIR}
+rm -f config.cache
+make distclean
+rm -f ${boot_dir}/libasmrun.a ${boot_dir}/libcomprmarsh.a
+
+# bootstrap
+echo "--- Build bootstrap (build -> host) compiler"
+./configure --prefix="${PREFIX}"
+make -j${CPU_COUNT} coldstart 
+
+# make libasmrun.a and libcomprmarsh.a for `build` machine
+make -j${CPU_COUNT} stdlib/libasmrun.a
+make -j${CPU_COUNT} stdlib/libcomprmarsh.a
+
+make -j${CPU_COUNT} ocamlc ocamlopt ocamlmklib
+
+make -j${CPU_COUNT} runtime/libcamlrun_shared.so
+
+# make stdlib native
+make -j${CPU_COUNT} -C stdlib all allopt COMPILER=${host_ocamlc} OPTCOMPILER=${host_ocamlopt} OCAMLRUN=${boot_ocamlrun}
+make -j${CPU_COUNT} -C otherlibs all COMPILER=${host_ocamlc} OPTCOMPILER=${host_ocamlopt} OCAMLRUN=${boot_ocamlrun}
+make -j${CPU_COUNT} -C otherlibs allopt COMPILER=${host_ocamlc} OPTCOMPILER=${host_ocamlopt} OCAMLRUN=${boot_ocamlrun}
+
+cp stdlib/libasmrun.a ${boot_dir}
+cp stdlib/libcomprmarsh.a ${boot_dir}
+cp stdlib/*.cmx* ${boot_dir}
+cp ./ocamlopt ${boot_dir}
+cp runtime/libcamlrun_shared.so ${boot_dir}
+cp ./tools/ocamlmklib ${boot_dir}
+
+echo "--- Clean bootstrap compilation artifacts"
+make clean
+
+# make target compiler
+echo "--- Build target (host -> target) compiler"
+./configure --host=${HOST_TRIPLE} --prefix="$PREFIX" \
+  --without-zstd \
+  --enable-systhreads \
+  -C "CC=${ZIG} cc -target ${HOST_TARGET}" "AR=${ZIG} ar" "RANLIB=${ZIG} ranlib -target ${HOST_TARGET}"
+make runtime/sak SAK_CC=cc SAK_LINK='cc -o $(1) $(2)'
+make -j${CPU_COUNT} ocamlopt ocamlc -j${CPU_COUNT} \ OCAMLRUN=${boot_ocamlrun} NEW_OCAMLRUN=${boot_ocamlrun}
+make -j${CPU_COUNT} ocamlmklib -j${CPU_COUNT} \ OCAMLRUN=${boot_ocamlrun} NEW_OCAMLRUN=${boot_ocamlrun}
+make -j${CPU_COUNT} tools/stripdebug tools/ocamldep tools/ocamlobjinfo tools/ocamlcmt tools/ocamlcp tools/ocamlmktop tools/ocamloptp -j${CPU_COUNT} \ OCAMLRUN=${boot_ocamlrun} NEW_OCAMLRUN=${boot_ocamlrun}
+make -j${CPU_COUNT} ocaml  \ OCAMLRUN=${boot_ocamlrun} NEW_OCAMLRUN=${boot_ocamlrun}
+
+make -j${CPU_COUNT} -C stdlib all OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc}
+make -j${CPU_COUNT} -C otherlibs all OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc}
+
+make -j${CPU_COUNT} -C stdlib opt.opt OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc} OPTCOMPILER=${host_ocamlopt}
+make -j${CPU_COUNT} -C otherlibs allopt OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc} OPTCOMPILER=${host_ocamlopt}
+make -j${CPU_COUNT} stdlib/libasmrun.a OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc}
+
+# Make native code tools for `build` targeting native code on `host`
+# this links in libraries built for target in otherlibs/* so not sure how it can
+# be made to work
+# make -j${CPU_COUNT} ocamlc.opt \
+#   OCAMLRUN=`realpath boot/ocamlrun` NEW_OCAMLRUN="${PWD}/boot/ocamlrun" \
+#   COMPILER="${PWD}/boot/ocamlc" \
+#   CAMLOPT="${PWD}/boot/ocamlrun ${PWD}/boot/ocamlopt" \
+#   OC_NATIVE_COMPFLAGS="-nostdlib -I ${PWD}/boot" \
+#   OC_NATIVE_LINKFLAGS="-I ${PWD}/boot"
