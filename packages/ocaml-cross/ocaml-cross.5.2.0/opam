@@ -79,6 +79,10 @@ post-messages: [
    to force a sequential build instead."
   {failure & jobs > 1 & opam-version >= "2.0.5"}
 ]
+extra-files: [
+  [ "build.sh.in" "sha256=e47aa2721b66f14e9679552c8df99afd530019a492454ed01f225b9fe6310e98" ]
+  [ "install.sh" "sha256=efd21d2478ed8d2282664718b0395c56b1f7668df483303c9ffda723950a3d7a" ]
+]
 extra-source "ocaml-cross.install" {
   src:
     "https://raw.githubusercontent.com/ocaml/opam-source-archives/main/patches/ocaml-base-compiler/ocaml-base-compiler.install"

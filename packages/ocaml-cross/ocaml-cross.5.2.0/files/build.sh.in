@@ -129,7 +129,13 @@ make -j${CPU_COUNT} -C otherlibs all OCAMLRUN=${boot_ocamlrun} COMPILER=${host_o
 
 make -j${CPU_COUNT} -C stdlib opt.opt OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc} OPTCOMPILER=${host_ocamlopt}
 make -j${CPU_COUNT} -C otherlibs allopt OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc} OPTCOMPILER=${host_ocamlopt}
-make -j${CPU_COUNT} stdlib/libasmrun.a OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc}
+# build the libcamlrun (bytecode) and libasmrun (opt) runtime libraries
+for i in runtime/libasmrun.a runtime/libcomprmarsh.a runtime/libasmrund.a runtime/libasmruni.a runtime/libasmrun_pic.a runtime/libasmrun_shared.so runtime/libcamlrun.a runtime/libcamlrund.a
+do
+  make -j${CPU_COUNT} $i OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc} OPTCOMPILER=${host_ocamlopt}
+done
+# make -j${CPU_COUNT} stdlib/libasmrun.a OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc}
+# make -j${CPU_COUNT} runtime/libasmrun.a OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc}
 
 # Make native code tools for `build` targeting native code on `host`
 # this links in libraries built for target in otherlibs/* so not sure how it can
