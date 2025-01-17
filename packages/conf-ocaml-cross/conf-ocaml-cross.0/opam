@@ -2,12 +2,11 @@ opam-version: "2.0"
 maintainer: "hello@chrisarmstrong.dev"
 build: [
   ["sh" "-exc" "$ZIG_PATH version || (echo Zig binary at ZIG_PATH=$ZIG_PATH not runnable && exit 1)"]
-  ["sh" "-exc" "opam env --switch=$BUILD_SWITCH || (echo \"opam switch BUILD_SWITCH=\\\"$BUILD_SWITCH\\\" not found\" && exit 1)"]
   ["sh" "-c" "echo \"\" > conf-ocaml-cross.config"] # blank out line
   ["sh" "-c" "echo \"host_triple: \\\"${HOST_TRIPLE}\\\"\" >> conf-ocaml-cross.config"]
   ["sh" "-c" "echo \"host_target: \\\"${HOST_TARGET}\\\"\" >> conf-ocaml-cross.config"]
   ["sh" "-c" "echo \"zig_path: \\\"${ZIG_PATH}\\\"\" >> conf-ocaml-cross.config"]
-  ["sh" "-c" "echo \"build_switch: \\\"${BUILD_SWITCH}\\\"\" >> conf-ocaml-cross.config"]
+  ["sh" "-c" "echo \"host_switch: \\\"${HOST_SWITCH}\\\"\" >> conf-ocaml-cross.config"]
 ]
 synopsis:
   "Virtual package specifying ocaml-cross target configuration"

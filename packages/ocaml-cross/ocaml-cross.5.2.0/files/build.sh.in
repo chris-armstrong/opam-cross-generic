@@ -3,20 +3,20 @@
 set -e
 
 PREFIX=
-HOST_TRIPLE=
 CPU_COUNT=4
 SOURCE_DIR=`realpath ${PWD}`
+HOST_SWITCH=
+OCAML_HOST_TARGET=
 ZIG=zig
+EXTRA_CONFIG_OPTS=
+OCAML_VERSION=5.2
 
-usage () { echo "$0 -p <prefix> -t <host_triple> [-g <host_target>] [-c <cpu count>] [-s <sources_dir>] [-z <path_to_zig_executable>]"; exit 1; }
+usage () { echo "$0 -p <prefix> -o <host_switch> -g <host_target> -t <ocaml_host_target> [-c <cpu count>] [-s <sources_dir>] [-z <path_to_zig_executable>] [-a <extra-config-opts>]"; exit 1; }
 
-while getopts ":hp:t:c:s:z:g:" option; do
+while getopts ":hp:t:c:s:z:g:o:a:" option; do
   case $option in
     p)
       PREFIX=${OPTARG}
-      ;;
-    t)
-      HOST_TRIPLE=${OPTARG}
       ;;
     c)
       CPU_COUNT=${OPTARG}
@@ -30,6 +30,15 @@ while getopts ":hp:t:c:s:z:g:" option; do
     g)
       HOST_TARGET=${OPTARG}
       ;;
+    o)
+      HOST_SWITCH=${OPTARG}
+      ;;
+    t)
+      OCAML_HOST_TARGET=${OPTARG}
+      ;;
+    a)
+      EXTRA_CONFIG_OPTS=${OPTARG}
+      ;;
     h | *)
       usage
     ;;
@@ -41,15 +50,10 @@ echo "----------"
 echo ""
 echo "Prefix: ${PREFIX}"
 echo "Cores: ${CPU_COUNT}"
-echo "Host Triple: ${HOST_TRIPLE}"
 echo "Host Target: ${HOST_TARGET}"
 echo "Zig Compiler: ${ZIG}"
-
-if [ -z "${HOST_TRIPLE}" ]
-then
-  echo "Host triple not specified"
-  exit 1
-fi
+echo "Host Switch: ${HOST_SWITCH}"
+echo "Sources Dir: ${SOURCE_DIR}"
 
 if [ -z "${PREFIX}" ]
 then
@@ -69,80 +73,235 @@ then
   exit 1
 fi
 
-boot_dir=${SOURCE_DIR}/boot
-boot_ocamlrun=${SOURCE_DIR}/boot/ocamlrun
-boot_ocamlc=${SOURCE_DIR}/boot/ocamlc
-boot_ocamlopt=${SOURCE_DIR}/boot/ocamlopt
+if [[ -z "$HOST_SWITCH" || ! -d "${HOST_SWITCH}" ]]
+then
+  echo "Host switch directory not found"
+  exit 1
+fi
 
-host_dir=${SOURCE_DIR}
-host_ocamlc=${host_dir}/ocamlc
-host_ocamlopt=${host_dir}/ocamlopt
+if [[ ! -x "${HOST_SWITCH}/bin/ocamlc.opt" || ! -x "${HOST_SWITCH}/bin/ocamlopt" ]]
+then
+  echo "Host compiler not found"
+  exit 1
+fi
+
+case "$(uname -s)" in
+    Linux*)     machine=Linux;;
+    Darwin*)    machine=Mac;;
+    CYGWIN*)    machine=Cygwin;;
+    MINGW*)     machine=MinGW;;
+    MSYS_NT*)   machine=MSys;;
+    *)          machine="UNKNOWN:${unameOut}"
+esac
+
+# Make a shell wrapper for $2 that passes its arguments appended
+# to the end, stored in $1
+function make_wrapper() {
+  wrapper_script_path=$1
+  caml_bin=$2
+  cat << EOF > "$wrapper_script_path"
+#!/bin/bash
+
+NEW_ARGS=""
+
+for ARG in "\$@"; do NEW_ARGS="\$NEW_ARGS \"\$ARG\""; done
+eval "${caml_bin} \$NEW_ARGS"
+EOF
+  chmod u+x "$wrapper_script_path"
+}
+
+# Make a `.cmd` wrapper that can be called from ocamlmklib
+# using the standard windows cmd.exe shell (using Unix.command)
+function make_windows_cmd_wrapper() {
+  if [[ "$machine" == "Cygwin" ]]
+  then
+    wrapper_script_path=$1
+    cmd_script_path=$(dirname "$1")/$(basename "$1").cmd
+    cat << EOF > "$cmd_script_path"
+@echo off
+setlocal
+ 
+if not exist "%~dpn0" echo Script "%~dpn0" not found & exit 2
+ 
+set _CYGBIN=$(cygpath -w /)\\bin\\
+if not exist "%_CYGBIN%" echo Couldn't find Cygwin at "%_CYGBIN%" & exit 3
+ 
+:: Resolve ___.sh to /cygdrive based *nix path and store in %_CYGSCRIPT
+for /f "delims=" %%A in ('%_CYGBIN%cygpath.exe "%~dpn0"') do set _CYGSCRIPT=%%A
+ 
+:: Throw away temporary env vars and invoke script, passing any args that were passed to us
+endlocal & %_CYGBIN%bash "%_CYGSCRIPT%" %*
+EOF
+  fi
+}
+
+# OCaml is built in its source directory
+BUILD_ROOT=${SOURCE_DIR}
+
+# ###############################
+# Create OCaml and Compiler wrapper scripts (assists with multi-arg changes)
+
+# -- host compiler wrapper scripts (anchored in the build root)
+host_compiler_path="$BUILD_ROOT/host-bin"
+mkdir -p "$host_compiler_path"
+host_ocamlc_wrapper="$host_compiler_path/host-ocamlc"
+make_wrapper "$host_ocamlc_wrapper" "$HOST_SWITCH/bin/ocamlc.opt -I ${HOST_SWITCH}/lib/ocaml -I ${HOST_SWITCH}/lib/ocaml/stublibs -I +unix -nostdlib "
+make_windows_cmd_wrapper "$host_ocamlc_wrapper"
+
+host_ocamlopt_wrapper="$host_compiler_path/host-ocamlopt"
+make_wrapper "$host_ocamlopt_wrapper" "${HOST_SWITCH}/bin/ocamlopt.opt -I ${HOST_SWITCH}/lib/ocaml -I +unix -nostdlib "
+make_windows_cmd_wrapper "$host_ocamlopt_wrapper"
+
+# Anchor the BUILD_ROOT with a native (windows) path that works outside cygwin
+build_root_native=$BUILD_ROOT
+[[ "$machine" == "Cygwin" ]] && build_root_native=$(cygpath -m "$BUILD_ROOT")
+
+# -- target ocaml compiler wrapper scripts (stored in temporary directory)
+target_ocamlc_wrapper=$(mktemp -t target-ocamlc-XXXXX)
+make_wrapper "$target_ocamlc_wrapper" "$build_root_native/ocamlc.opt -I $build_root_native/stdlib -I $build_root_native/otherlibs/unix -I ${HOST_SWITCH}/lib/ocaml/stublibs -nostdlib " # trailing space is important
+ make_windows_cmd_wrapper "$target_ocamlc_wrapper"
+
+target_ocamlopt_wrapper=$(mktemp -t target-ocamlopt-XXXXX)
+make_wrapper "$target_ocamlopt_wrapper" "$build_root_native/ocamlopt.opt -I $build_root_native/stdlib -I $build_root_native/otherlibs/unix -nostdlib " # trailing space is important
+make_windows_cmd_wrapper "$target_ocamlopt_wrapper"
+
+# -- target C compiler wrapper scripts (these need to be added to the prefix straight away)
+mkdir -p "${PREFIX}/bin"
+
+zig_cc_wrapper="${PREFIX}/bin/target-cc"
+make_wrapper "$zig_cc_wrapper" "${ZIG} cc -target ${HOST_TARGET}"
+make_windows_cmd_wrapper "$zig_cc_wrapper"
+
+zig_aspp_wrapper="${PREFIX}/bin/target-aspp"
+make_wrapper "$zig_aspp_wrapper" "${ZIG} cc -target ${HOST_TARGET} -c"
+make_windows_cmd_wrapper "$zig_aspp_wrapper"
+zig_ar_wrapper="${PREFIX}/bin/target-ar"
+make_wrapper "$zig_ar_wrapper" "${ZIG} ar"
+make_windows_cmd_wrapper "$zig_ar_wrapper"
+
+# Disable function sections if the build machine doesn't support it
+has_function_sections=$($HOST_SWITCH/bin/ocamlopt.opt -config | grep function_sections | cut -d ':' -f 2)
+if [[ "$has_function_sections" =~ "false" ]]
+then
+	EXTRA_CONFIG_OPTS="${EXTRA_CONFIG_OPTS} --disable-function-sections"
+fi
 
 echo "--- Clean all configuration and previous builds"
-cd ${SOURCE_DIR}
+cd ${BUILD_ROOT}
 rm -f config.cache
 make distclean
-rm -f ${boot_dir}/libasmrun.a ${boot_dir}/libcomprmarsh.a
 
 # bootstrap
 echo "--- Build bootstrap (build -> host) compiler"
-./configure --prefix="${PREFIX}"
-make -j${CPU_COUNT} coldstart 
+prefix_native="$PREFIX"
+[[ "$machine" == "Cygwin" ]] && prefix_native=$(cygpath -m "$PREFIX")
+ln_use="ln -s "
+[[ "$machine" == "Cygwin" ]] && ln_use="cp "
+echo "configuring with --host=${OCAML_HOST_TARGET} --prefix=${prefix_native} ${EXTRA_CONFIG_OPTS}"
+export "PATH=$PATH:$PREFIX/bin"
+# FIXME: patch configure to ignore flexlink when the host triplet is not Cygwin/MingW 
+./configure --host=${OCAML_HOST_TARGET} --prefix="$prefix_native" --disable-ocamldoc --disable-stdlib-manpages --disable-ocamltest --disable-ocamldebug \
+  ${EXTRA_CONFIG_OPTS} \
+  -C "CC=target-cc" \
+  "AR=target-ar" \
+  "RANLIB=${ZIG} ranlib -target ${HOST_TARGET}" \
+  "ASPP=target-aspp" \
+  "MIN64CC=target-cc" \
+  "PARTIALLD=target-cc -r " \
+  "LD=target-cc" \
+  "LN=${ln_use}"
 
-# make libasmrun.a and libcomprmarsh.a for `build` machine
-make -j${CPU_COUNT} stdlib/libasmrun.a
-make -j${CPU_COUNT} stdlib/libcomprmarsh.a
+# Export path to host ocaml compiler
+export "PATH=$PATH:$host_compiler_path"
 
-make -j${CPU_COUNT} ocamlc ocamlopt ocamlmklib
+# Set up sak compiler
+cp Makefile.config Makefile.config.bak
+echo "SAK_CC=cc" >> Makefile.config
+echo 'SAK_CFLAGS=$(OC_CFLAGS) $(OC_CPPFLAGS)' >> Makefile.config
+echo 'SAK_LINK=$(SAK_CC) $(SAK_CFLAGS) $(OUTPUTEXE)$(1) $(2)' >> Makefile.config
+echo "MIN64CC=${zig_cc_wrapper}" >> Makefile.config
+echo 'LN=cp ' >> Makefile.build_config
 
-make -j${CPU_COUNT} runtime/libcamlrun_shared.so
+# Set paths to host switch
+OCAMLRUN="$HOST_SWITCH/bin/ocamlrun"
+OCAMLLEX="$HOST_SWITCH/bin/ocamllex"
+OCAMLYACC="$HOST_SWITCH/bin/ocamlyacc"
+CAMLDEP="$HOST_SWITCH/bin/ocamlc"
+DYNAMIC_LIBS="-I $HOST_SWITCH/lib/ocaml/stublibs"
+HOST_STATIC_LIBS="-I $HOST_SWITCH/lib/ocaml"
+TARGET_STATIC_LIBS="-I $build_root_native/stdlib -I $build_root_native/otherlibs/unix"
 
-# make stdlib native
-make -j${CPU_COUNT} -C stdlib all allopt COMPILER=${host_ocamlc} OPTCOMPILER=${host_ocamlopt} OCAMLRUN=${boot_ocamlrun}
-make -j${CPU_COUNT} -C otherlibs all COMPILER=${host_ocamlc} OPTCOMPILER=${host_ocamlopt} OCAMLRUN=${boot_ocamlrun}
-make -j${CPU_COUNT} -C otherlibs allopt COMPILER=${host_ocamlc} OPTCOMPILER=${host_ocamlopt} OCAMLRUN=${boot_ocamlrun}
+HOST_MAKEFILE_CONFIG="$HOST_SWITCH/lib/ocaml/Makefile.config"
 
-cp stdlib/libasmrun.a ${boot_dir}
-cp stdlib/libcomprmarsh.a ${boot_dir}
-cp stdlib/*.cmx* ${boot_dir}
-cp ./ocamlopt ${boot_dir}
-cp runtime/libcamlrun_shared.so ${boot_dir}
-cp ./tools/ocamlmklib ${boot_dir}
+# retrieve a host variable from the Makefile.config of the host compiler
+get_host_variable () {
+  cat $HOST_MAKEFILE_CONFIG | grep "$1=" | awk -F '=' '{print $2}'
+}
 
-echo "--- Clean bootstrap compilation artifacts"
-make clean
+NATDYNLINK=$(get_host_variable "NATDYNLINK")
+NATDYNLINKOPTS=$(get_host_variable "NATDYNLINKOPTS")
 
-# make target compiler
-echo "--- Build target (host -> target) compiler"
-./configure --host=${HOST_TRIPLE} --prefix="$PREFIX" \
-  --without-zstd \
-  --enable-systhreads \
-  -C "CC=${ZIG} cc -target ${HOST_TARGET}" "AR=${ZIG} ar" "RANLIB=${ZIG} ranlib -target ${HOST_TARGET}"
-make runtime/sak SAK_CC=cc SAK_LINK='cc -o $(1) $(2)'
-make -j${CPU_COUNT} ocamlopt ocamlc -j${CPU_COUNT} \ OCAMLRUN=${boot_ocamlrun} NEW_OCAMLRUN=${boot_ocamlrun}
-make -j${CPU_COUNT} ocamlmklib -j${CPU_COUNT} \ OCAMLRUN=${boot_ocamlrun} NEW_OCAMLRUN=${boot_ocamlrun}
-make -j${CPU_COUNT} tools/stripdebug tools/ocamldep tools/ocamlobjinfo tools/ocamlcmt tools/ocamlcp tools/ocamlmktop tools/ocamloptp -j${CPU_COUNT} \ OCAMLRUN=${boot_ocamlrun} NEW_OCAMLRUN=${boot_ocamlrun}
-make -j${CPU_COUNT} ocaml  \ OCAMLRUN=${boot_ocamlrun} NEW_OCAMLRUN=${boot_ocamlrun}
+make_caml () {
+  make -j$CPU_COUNT \
+       CAMLDEP="$CAMLDEP -depend" \
+       OCAMLLEX="$OCAMLLEX" \
+       OCAMLYACC="$OCAMLYACC" CAMLYACC="$OCAMLYACC" \
+       CAMLRUN="$OCAMLRUN" OCAMLRUN="$OCAMLRUN" \
+       NEW_OCAMLRUN="$OCAMLRUN" \
+       CAMLC="$CAMLC" OCAMLC="$CAMLC" \
+       CAMLOPT="$CAMLOPT" OCAMLOPT="$CAMLOPT" \
+       $@
+}
 
-make -j${CPU_COUNT} -C stdlib all OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc}
-make -j${CPU_COUNT} -C otherlibs all OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc}
+make_host () {
+  echo "making host: $@"
+  CAMLC="$host_compiler_path/host-ocamlc"
+  [[ "$machine" == "Cygwin" ]] && CAMLC=`cygpath -m $(which $CAMLC)`
+  CAMLOPT="$host_compiler_path/host-ocamlopt"
+  [[ "$machine" == "Cygwin" ]] && CAMLOPT=`cygpath -m $(which $CAMLOPT)`
 
-make -j${CPU_COUNT} -C stdlib opt.opt OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc} OPTCOMPILER=${host_ocamlopt}
-make -j${CPU_COUNT} -C otherlibs allopt OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc} OPTCOMPILER=${host_ocamlopt}
-# build the libcamlrun (bytecode) and libasmrun (opt) runtime libraries
-for i in runtime/libasmrun.a runtime/libcomprmarsh.a runtime/libasmrund.a runtime/libasmruni.a runtime/libasmrun_pic.a runtime/libasmrun_shared.so runtime/libcamlrun.a runtime/libcamlrund.a
-do
-  make -j${CPU_COUNT} $i OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc} OPTCOMPILER=${host_ocamlopt}
-done
-# make -j${CPU_COUNT} stdlib/libasmrun.a OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc}
-# make -j${CPU_COUNT} runtime/libasmrun.a OCAMLRUN=${boot_ocamlrun} COMPILER=${host_ocamlc}
+  make_caml \
+    NATDYNLINK="$NATDYNLINK" NATDYNLINKOPTS="$NATDYNLINKOPTS" \
+    "$@"
+}
 
-# Make native code tools for `build` targeting native code on `host`
-# this links in libraries built for target in otherlibs/* so not sure how it can
-# be made to work
-# make -j${CPU_COUNT} ocamlc.opt \
-#   OCAMLRUN=`realpath boot/ocamlrun` NEW_OCAMLRUN="${PWD}/boot/ocamlrun" \
-#   COMPILER="${PWD}/boot/ocamlc" \
-#   CAMLOPT="${PWD}/boot/ocamlrun ${PWD}/boot/ocamlopt" \
-#   OC_NATIVE_COMPFLAGS="-nostdlib -I ${PWD}/boot" \
-#   OC_NATIVE_LINKFLAGS="-I ${PWD}/boot"
+make_target () {
+  echo "making target: $@"
+  CAMLC="${target_ocamlc_wrapper}"
+  [[ "$machine" == "Cygwin" ]] && CAMLC=`cygpath -m $(which $CAMLC)`
+  CAMLOPT="${target_ocamlopt_wrapper}"
+  [[ "$machine" == "Cygwin" ]] && CAMLOPT=`cygpath -m $(which $CAMLOPT)`
+
+  make_caml BUILD_ROOT="$build_root_native" TARGET_OCAMLC="$TARGET_OCAMLC" TARGET_OCAMLOPT="$TARGET_OCAMLOPT" "$@"
+}
+echo "---- MAKING HOST ----"
+make_host runtime 
+make_host coreall
+make_host opt-core
+make_host ocamlc.opt
+make_host ocamlopt.opt
+make_host compilerlibs/ocamltoplevel.cma
+make_host otherlibraries 
+make_host ocamltoolsopt ocamltoolsopt.opt 
+# make_host othertools
+
+echo "---- MAKING TARGET ----"
+rm $(find . | grep -E '\.cm.?.$')
+make_target -C stdlib all allopt
+make_target ocaml ocamlc
+make_target ocamlopt
+make_target otherlibraries otherlibrariesopt ocamltoolsopt \
+            driver/main.cmx driver/optmain.cmx
+
+# build the compiler shared libraries with the target `zstd.npic.o`
+cp Makefile.config.bak Makefile.config
+echo 'SAK_CC=cc' >> Makefile.config
+make_target compilerlibs/ocamlcommon.cmxa \
+            compilerlibs/ocamlbytecomp.cmxa \
+            compilerlibs/ocamloptcomp.cmxa \
+            compilerlibs/ocamltoplevel.cmxa
+if [[ "$OCAML_VERSION" =~ '^5\.' ]]
+then
+  make_target othertools
+fi
+

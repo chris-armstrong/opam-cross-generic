@@ -62,10 +62,17 @@ x-env-path-rewrite: [
   [CAML_LD_LIBRARY_PATH (";" {os = "win32"} ":" {os != "win32"}) "target"]
 ]
 build: [
-  [ "/bin/bash" "./build.sh" "-p" "%{prefix}%" "-c" "%{jobs}%" "-t" "%{conf-ocaml-cross:host_triple}%" "-g" "%{conf-ocaml-cross:host_target}%" "-z" "%{conf-ocaml-cross:zig_path}%"]
+  [ "/bin/bash" "./build.sh" 
+    "-p" "%{prefix}%" 
+    "-o" "%{conf-ocaml-cross:host_switch}%"
+    "-g" "%{conf-ocaml-cross:host_target}%" 
+    "-t" "%{conf-ocaml-cross:host_triple}%" 
+    "-c" "%{jobs}%" 
+    "-z" "%{conf-ocaml-cross:zig_path}%"
+  ]
 ]
 substs: [ "build.sh" ]
-install: [ "/bin/bash" "install.sh" "%{prefix}%"]
+install: [ "/bin/bash" "install.sh" "%{prefix}%" "%{conf-ocaml-cross:host_switch}%"]
 url {
   src: "https://github.com/ocaml/ocaml/archive/5.2.0.tar.gz"
   checksum: "sha256=48554abfd530fcdaa08f23f801b699e4f74c320ddf7d0bd56b0e8c24e55fc911"
@@ -80,8 +87,8 @@ post-messages: [
   {failure & jobs > 1 & opam-version >= "2.0.5"}
 ]
 extra-files: [
-  [ "build.sh.in" "sha256=e47aa2721b66f14e9679552c8df99afd530019a492454ed01f225b9fe6310e98" ]
-  [ "install.sh" "sha256=efd21d2478ed8d2282664718b0395c56b1f7668df483303c9ffda723950a3d7a" ]
+  [ "build.sh.in" "sha256=81a139e954de5294d1da9084b8dbff6abefd0d9875b71d34b883828c9cf41550" ]
+  [ "install.sh" "sha256=24b2a27b09e092897a15e9f837bf724c5f5da31967c0617f64565762e1655cba" ]
 ]
 extra-source "ocaml-cross.install" {
   src:
