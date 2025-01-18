@@ -295,11 +295,11 @@ make_target otherlibraries otherlibrariesopt ocamltoolsopt \
 
 # build the compiler shared libraries with the target `zstd.npic.o`
 cp Makefile.config.bak Makefile.config
-echo 'SAK_CC=cc' >> Makefile.config
+echo 'SAK_CC=target-cc' >> Makefile.config
 make_target compilerlibs/ocamlcommon.cmxa \
             compilerlibs/ocamlbytecomp.cmxa \
-            compilerlibs/ocamloptcomp.cmxa \
-            compilerlibs/ocamltoplevel.cmxa
+            compilerlibs/ocamloptcomp.cmxa 
+            # compilerlibs/ocamltoplevel.cmxa
 if [[ "$OCAML_VERSION" =~ '^5\.' ]]
 then
   make_target othertools

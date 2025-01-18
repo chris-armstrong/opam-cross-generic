@@ -87,8 +87,9 @@ post-messages: [
   {failure & jobs > 1 & opam-version >= "2.0.5"}
 ]
 extra-files: [
-  [ "build.sh.in" "sha256=81a139e954de5294d1da9084b8dbff6abefd0d9875b71d34b883828c9cf41550" ]
+  [ "build.sh.in" "sha256=ee8597c5ce63e559fadefd0b740b1895f0f7580ac92bca9e7eaef96ea98bf6d4" ]
   [ "install.sh" "sha256=24b2a27b09e092897a15e9f837bf724c5f5da31967c0617f64565762e1655cba" ]
+  [ "cross_5_2.patch" "sha256=11dcfdfb506113025f3a9b4fb2e798795c9126cbdeb93ba6f5512628fd49f439" ]
 ]
 extra-source "ocaml-cross.install" {
   src:
@@ -98,3 +99,6 @@ extra-source "ocaml-cross.install" {
     "md5=3e969b841df1f51ca448e6e6295cb451"
   ]
 }
+patches: [
+  "cross_5_2.patch"
+]
