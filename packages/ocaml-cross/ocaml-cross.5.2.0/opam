@@ -72,7 +72,7 @@ build: [
   ]
 ]
 substs: [ "build.sh" ]
-install: [ "/bin/bash" "install.sh" "%{prefix}%" "%{conf-ocaml-cross:host_switch}%"]
+install: [ "/bin/bash" "install.sh" "%{prefix}%" "%{conf-ocaml-cross:host_switch}%" "crossg"]
 url {
   src: "https://github.com/ocaml/ocaml/archive/5.2.0.tar.gz"
   checksum: "sha256=48554abfd530fcdaa08f23f801b699e4f74c320ddf7d0bd56b0e8c24e55fc911"
@@ -88,7 +88,7 @@ post-messages: [
 ]
 extra-files: [
   [ "build.sh.in" "sha256=ee8597c5ce63e559fadefd0b740b1895f0f7580ac92bca9e7eaef96ea98bf6d4" ]
-  [ "install.sh" "sha256=24b2a27b09e092897a15e9f837bf724c5f5da31967c0617f64565762e1655cba" ]
+  [ "install.sh" "sha256=2cd80b2aaefd340e23e30a722cd8e5f4c72eb0a91a4b3211a803f89e1e2f21a1" ]
   [ "cross_5_2.patch" "sha256=11dcfdfb506113025f3a9b4fb2e798795c9126cbdeb93ba6f5512628fd49f439" ]
 ]
 extra-source "ocaml-cross.install" {
