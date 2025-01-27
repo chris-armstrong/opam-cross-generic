@@ -35,15 +35,15 @@ OCAMLRUN="$HOST_SWITCH/bin/ocamlrun" make install
 
 echo "-- seting up ocamlfind config for host switch $HOST_SWITCH with toolchain $CROSS_NAME"
 mv $HOST_SWITCH/lib/findlib.conf $HOST_SWITCH/lib/findlib.conf.bak
-sed -e "/(crossg)/d" $HOST_SWITCH/lib/findlib.conf.bak > $HOST_SWITCH/lib/findlib.conf
+sed -e "/(${CROSS_NAME})/d" $HOST_SWITCH/lib/findlib.conf.bak > $HOST_SWITCH/lib/findlib.conf
 cat << EOF >> $HOST_SWITCH/lib/findlib.conf
 path($CROSS_NAME)="$PREFIX/lib:$PREFIX/lib/ocaml"
 destdir($CROSS_NAME)="$PREFIX/lib"
 stdlib($CROSS_NAME)="$PREFIX/lib/ocaml"
-ocamlc($CROSS_NAME)="ocamlc"
-ocamlopt($CROSS_NAME)="ocamlopt"
-ocamldep($CROSS_NAME)="ocamldep"
-ocamlmklib($CROSS_NAME)="ocamlmklib"
+ocamlc($CROSS_NAME)="$PREFIX/bin/ocamlc"
+ocamlopt($CROSS_NAME)="$PREFIX/bin/ocamlopt"
+ocamldep($CROSS_NAME)="$PREFIX/bin/ocamldep"
+ocamlmklib($CROSS_NAME)="$PREFIX/bin/ocamlmklib"
 ldconf($CROSS_NAME)="$PREFIX/lib/ocaml/ld.conf"
 EOF
 

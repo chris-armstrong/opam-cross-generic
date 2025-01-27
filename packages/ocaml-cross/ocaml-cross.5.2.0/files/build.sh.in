@@ -79,7 +79,7 @@ then
   exit 1
 fi
 
-if [[ ! -x "${HOST_SWITCH}/bin/ocamlc.opt" || ! -x "${HOST_SWITCH}/bin/ocamlopt" ]]
+if [[ ! -x "${HOST_SWITCH}/bin/ocamlc.opt" || ! -x "${HOST_SWITCH}/bin/ocamlopt.opt" ]]
 then
   echo "Host compiler not found"
   exit 1
@@ -198,7 +198,7 @@ prefix_native="$PREFIX"
 ln_use="ln -s "
 [[ "$machine" == "Cygwin" ]] && ln_use="cp "
 echo "configuring with --host=${OCAML_HOST_TARGET} --prefix=${prefix_native} ${EXTRA_CONFIG_OPTS}"
-export "PATH=$PATH:$PREFIX/bin"
+export "PATH=$PREFIX/bin:$PATH"
 # FIXME: patch configure to ignore flexlink when the host triplet is not Cygwin/MingW 
 ./configure --host=${OCAML_HOST_TARGET} --prefix="$prefix_native" --disable-ocamldoc --disable-stdlib-manpages --disable-ocamltest --disable-ocamldebug \
   ${EXTRA_CONFIG_OPTS} \
@@ -212,7 +212,7 @@ export "PATH=$PATH:$PREFIX/bin"
   "LN=${ln_use}"
 
 # Export path to host ocaml compiler
-export "PATH=$PATH:$host_compiler_path"
+# export "PATH=$host_compiler_path:$PATH"
 
 # Set up sak compiler
 cp Makefile.config Makefile.config.bak
@@ -254,7 +254,7 @@ make_caml () {
 }
 
 make_host () {
-  echo "making host: $@"
+  echo "--making host: $@--"
   CAMLC="$host_compiler_path/host-ocamlc"
   [[ "$machine" == "Cygwin" ]] && CAMLC=`cygpath -m $(which $CAMLC)`
   CAMLOPT="$host_compiler_path/host-ocamlopt"
