@@ -21,6 +21,7 @@ depends: [
 
   # configuration
   "conf-ocaml-cross"
+  "conf-zig-wrapper"
 
   # ocamlfind (needed for findlib extension)
   "ocamlfind"
@@ -66,7 +67,7 @@ x-env-path-rewrite: [
 build: [
   [ "/bin/bash" "./build.sh" 
     "-p" "%{prefix}%/cross-sysroot" 
-    "-o" "%{conf-ocaml-cross:host_switch}%"
+    "-o" "%{prefix}%"
     "-g" "%{conf-ocaml-cross:host_target}%" 
     "-t" "%{conf-ocaml-cross:host_triple}%" 
     "-c" "%{jobs}%" 
@@ -74,7 +75,7 @@ build: [
   ]
 ]
 substs: [ "build.sh" ]
-install: [ "/bin/bash" "install.sh" "%{prefix}%/cross-sysroot" "%{conf-ocaml-cross:host_switch}%" "cross"]
+install: [ "/bin/bash" "install.sh" "%{prefix}%/cross-sysroot" "%{prefix}%" "cross"]
 url {
   src: "https://github.com/ocaml/ocaml/archive/5.2.0.tar.gz"
   checksum: "sha256=48554abfd530fcdaa08f23f801b699e4f74c320ddf7d0bd56b0e8c24e55fc911"
@@ -89,7 +90,7 @@ post-messages: [
   {failure & jobs > 1 & opam-version >= "2.0.5"}
 ]
 extra-files: [
-  [ "build.sh.in" "sha256=efe6f0486008d4f4be401808c6a818d65ac89aa11182af46c230e4c1fa612122" ]
+  [ "build.sh.in" "sha256=72dd50b2d86486691f4f3e062dc350c2332d8b3557edd9c4422073e26cfb0c27" ]
   [ "install.sh" "sha256=c0ceb7c6c2b14ff10ac3e79e66b0e3b2ab3eeb4cb51e50ec8f5d1f2130431e59" ]
   [ "cross_5_2.patch" "sha256=11dcfdfb506113025f3a9b4fb2e798795c9126cbdeb93ba6f5512628fd49f439" ]
 ]

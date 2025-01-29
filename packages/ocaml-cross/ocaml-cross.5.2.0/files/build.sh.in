@@ -165,20 +165,6 @@ target_ocamlopt_wrapper=$(mktemp -t target-ocamlopt-XXXXX)
 make_wrapper "$target_ocamlopt_wrapper" "$build_root_native/ocamlopt.opt -I $build_root_native/stdlib -I $build_root_native/otherlibs/unix -nostdlib " # trailing space is important
 make_windows_cmd_wrapper "$target_ocamlopt_wrapper"
 
-# -- target C compiler wrapper scripts (these need to be added to the prefix straight away)
-mkdir -p "${PREFIX}/bin"
-
-zig_cc_wrapper="${PREFIX}/bin/target-cc"
-make_wrapper "$zig_cc_wrapper" "${ZIG} cc -target ${HOST_TARGET}"
-make_windows_cmd_wrapper "$zig_cc_wrapper"
-
-zig_aspp_wrapper="${PREFIX}/bin/target-aspp"
-make_wrapper "$zig_aspp_wrapper" "${ZIG} cc -target ${HOST_TARGET} -c"
-make_windows_cmd_wrapper "$zig_aspp_wrapper"
-zig_ar_wrapper="${PREFIX}/bin/target-ar"
-make_wrapper "$zig_ar_wrapper" "${ZIG} ar"
-make_windows_cmd_wrapper "$zig_ar_wrapper"
-
 # Disable function sections if the build machine doesn't support it
 has_function_sections=$($HOST_SWITCH/bin/ocamlopt.opt -config | grep function_sections | cut -d ':' -f 2)
 if [[ "$has_function_sections" =~ "false" ]]
@@ -202,13 +188,13 @@ export "PATH=$PREFIX/bin:$PATH"
 # FIXME: patch configure to ignore flexlink when the host triplet is not Cygwin/MingW 
 ./configure --host=${OCAML_HOST_TARGET} --prefix="$prefix_native" --disable-ocamldoc --disable-stdlib-manpages --disable-ocamltest --disable-ocamldebug \
   ${EXTRA_CONFIG_OPTS} \
-  -C "CC=target-cc" \
-  "AR=target-ar" \
+  -C "CC=${HOST_TARGET}-target-cc" \
+  "AR=${HOST_TARGET}-target-ar" \
   "RANLIB=${ZIG} ranlib -target ${HOST_TARGET}" \
-  "ASPP=target-aspp" \
-  "MIN64CC=target-cc" \
-  "PARTIALLD=target-cc -r " \
-  "LD=target-cc" \
+  "ASPP=${HOST_TARGET}-target-aspp" \
+  "MIN64CC=${HOST_TARGET}-target-cc" \
+  "PARTIALLD=${HOST_TARGET}-target-cc -r " \
+  "LD=${HOST_TARGET}-target-cc" \
   "LN=${ln_use}"
 
 # Export path to host ocaml compiler
@@ -295,7 +281,7 @@ make_target otherlibraries otherlibrariesopt ocamltoolsopt \
 
 # build the compiler shared libraries with the target `zstd.npic.o`
 cp Makefile.config.bak Makefile.config
-echo 'SAK_CC=target-cc' >> Makefile.config
+echo "SAK_CC=${HOST_TARGET}-target-cc" >> Makefile.config
 make_target compilerlibs/ocamlcommon.cmxa \
             compilerlibs/ocamlbytecomp.cmxa \
             compilerlibs/ocamloptcomp.cmxa 
