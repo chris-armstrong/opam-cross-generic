@@ -6,7 +6,6 @@ build: [
   ["sh" "-c" "echo \"host_triple: \\\"${HOST_TRIPLE}\\\"\" >> conf-ocaml-cross.config"]
   ["sh" "-c" "echo \"host_target: \\\"${HOST_TARGET}\\\"\" >> conf-ocaml-cross.config"]
   ["sh" "-c" "echo \"zig_path: \\\"${ZIG_PATH}\\\"\" >> conf-ocaml-cross.config"]
-  ["sh" "-c" "echo \"host_switch: \\\"${HOST_SWITCH}\\\"\" >> conf-ocaml-cross.config"]
 ]
 synopsis:
   "Virtual package specifying ocaml-cross target configuration"
