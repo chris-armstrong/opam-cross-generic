@@ -4,7 +4,7 @@ build: [
   ["sh" "build.sh"]
 ]
 extra-files: [
-	["build.sh" "sha256=0807c4df4f17834d501b1c0d1af9ae1a9f489dc6003c01b19e5e892013f34ba6"]
+	["build.sh" "sha256=e29bd5dbc4778e0143ff9ef5b1baeea09973f7e74948601bc2c31cf8b8353101"]
 ]
 synopsis:
   "Virtual package specifying ocaml-cross target configuration"
