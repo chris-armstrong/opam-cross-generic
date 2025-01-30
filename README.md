@@ -1,12 +1,12 @@
 # opam-cross-generic
 
-An opam overlay repository that demonstrates the use of the [zig] compiler to cross-compile OCaml between different platforms.
+An opam overlay repository that demonstrates the use of the [zig](https://ziglang.org/) compiler to cross-compile OCaml between different platforms.
 
 **It is intended as a demonstration only:** *it may never be developed into a full cross-compilation solution for OCaml!*
 
 ## What is tested?
 
-The repository contains an OCaml cross-compiler package (`ocaml-cross`; OCaml 5.2.0) and a couple of simple packages adapted to work with it ([**fmt**]() as `fmt-cross`; [**yojson**]() as `yojson-cross`).
+The repository contains an OCaml cross-compiler package (`ocaml-cross`; OCaml 5.2.0) and a couple of simple packages adapted to work with it ([**fmt**](https://opam.ocaml.org/packages/fmt/) as `fmt-cross`; [**yojson**](https://opam.ocaml.org/packages/yojson/) as `yojson-cross`).
 
 The following cross-compile hosts and targets have been (loosely) tested:
 
@@ -92,3 +92,8 @@ Setting up a cross-compile environment is time-consuming and difficult (obtainin
 * Find a generic way to create the `-cross` packages
 * Work out how to get packages with `C` dependencies to cross-compile correctly
 * MacOS X host support
+
+## Thanks
+
+* ziglang for such an awesome suite of tools for C cross-compilation
+* [ocaml nix overlay](https://github.com/nix-ocaml/nix-overlays/tree/master/ocaml) for the patches and instructions to get OCaml to cross-compile reliably
