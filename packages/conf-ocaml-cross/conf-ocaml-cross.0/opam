@@ -1,7 +1,7 @@
 opam-version: "2.0"
 maintainer: "hello@chrisarmstrong.dev"
 build: [
-  ["/bin/bash" "build.sh"]
+  ["sh" "build.sh"]
 ]
 extra-files: [
 	["build.sh" "sha256=89c85bc0cfb2e55e8562520f53a9ef59302922a6032911a8a75a0eaae379f44e"]
