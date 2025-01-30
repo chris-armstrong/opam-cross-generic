@@ -5,9 +5,11 @@ set -ex
 PREFIX=$1
 HOST_SWITCH=$2
 CROSS_NAME=$3
+
+mkdir -p "$PREFIX"
 if [ ! -d "${PREFIX}" ]
 then
-	echo "Prefix directory \"$PREFIX\" does not exist"
+	echo "Prefix directory \"$PREFIX\" is not a directory / does not exist"
 	exit 1
 fi
 

@@ -91,7 +91,7 @@ post-messages: [
 ]
 extra-files: [
   [ "build.sh.in" "sha256=72dd50b2d86486691f4f3e062dc350c2332d8b3557edd9c4422073e26cfb0c27" ]
-  [ "install.sh" "sha256=c0ceb7c6c2b14ff10ac3e79e66b0e3b2ab3eeb4cb51e50ec8f5d1f2130431e59" ]
+  [ "install.sh" "sha256=6988e79c9cf65c77c85cd2e881f1995b054cdbb2f92e270b333ea597d1c65e71" ]
   [ "cross_5_2.patch" "sha256=11dcfdfb506113025f3a9b4fb2e798795c9126cbdeb93ba6f5512628fd49f439" ]
 ]
 extra-source "ocaml-cross.install" {
