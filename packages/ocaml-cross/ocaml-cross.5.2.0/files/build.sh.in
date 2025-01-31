@@ -228,6 +228,9 @@ get_host_variable () {
 NATDYNLINK=$(get_host_variable "NATDYNLINK")
 NATDYNLINKOPTS=$(get_host_variable "NATDYNLINKOPTS")
 
+has_zstd=[[ "$(ocamlopt -config | grep "^bytecomp_c_libraries:")" =~ "zstd" ]]
+ZSTD_LIBS=
+
 make_caml () {
   make -j$CPU_COUNT \
        CAMLDEP="$CAMLDEP -depend" \
@@ -246,9 +249,14 @@ make_host () {
   [[ "$machine" == "Cygwin" ]] && CAMLC=`cygpath -m $(which $CAMLC)`
   CAMLOPT="$host_compiler_path/host-ocamlopt"
   [[ "$machine" == "Cygwin" ]] && CAMLOPT=`cygpath -m $(which $CAMLOPT)`
+  ZSTD_LIBS=
+  if [[ $has_zstd == 0 ]]
+  then
+    ZSTD_LIBS="-lzstd"
+  fi
 
   make_caml \
-    NATDYNLINK="$NATDYNLINK" NATDYNLINKOPTS="$NATDYNLINKOPTS" \
+    NATDYNLINK="$NATDYNLINK" NATDYNLINKOPTS="$NATDYNLINKOPTS" ZSTD_LIBS="${ZSTD_LIBS}" \
     "$@"
 }
 
