@@ -186,6 +186,7 @@ ln_use="ln -s "
 [[ "$machine" == "Cygwin" ]] && ln_use="cp "
 echo "configuring with --host=${OCAML_HOST_TARGET} --prefix=${prefix_native} ${EXTRA_CONFIG_OPTS}"
 export "PATH=$PREFIX/bin:$PATH"
+export PKG_CONFIG_LIBDIR= # disable search of regular pkg-config search paths to avoid libzstd link issues
 # FIXME: patch configure to ignore flexlink when the host triplet is not Cygwin/MingW 
 ./configure --host=${OCAML_HOST_TARGET} --prefix="$prefix_native" --disable-ocamldoc --disable-stdlib-manpages --disable-ocamltest --disable-ocamldebug \
   ${EXTRA_CONFIG_OPTS} \
