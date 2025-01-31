@@ -33,8 +33,14 @@ jobs:
       - name: add repository
         run: opam repo add cross .
       - name: configure and install x86-64-linux-gnu cross
-        run: opam install ocaml-cross
+        run: opam install conf-ocaml-cross conf-zig-wrapper
         env:
           HOST_TRIPLE: x86-64-linux-gnu
           HOST_TARGET: x86-64-linux-gnu
           ZIG_PATH: zig
+      - name: test zig wrapper
+        run: "$OPAM_SWITCH_PREFIX/bin/x86_64-linux-gnu-target-cc --version"
+      - name: install compiler
+        run: opam install ocaml-cross --verbose
+
+          
