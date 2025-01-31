@@ -61,7 +61,8 @@ then
   exit 1
 fi
 
-if [ ! -x "${ZIG}" ]
+which -s "$ZIG" > /dev/null
+if [ $? != 0 ]
 then
   echo "Zig binary not executable"
   exit 1
