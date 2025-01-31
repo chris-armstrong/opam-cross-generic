@@ -25,9 +25,6 @@ jobs:
         uses: mlugg/setup-zig@v1
         with:
           version: master
-      - name: set zig wrapper
-        run: ln -s $(which zig) /bin/zig
-
       - name: Set-up OCaml
         uses: ocaml/setup-ocaml@v3
         with:
@@ -39,8 +36,8 @@ jobs:
         env:
           HOST_TRIPLE: x86-64-linux-gnu
           HOST_TARGET: x86-64-linux-gnu
-          ZIG_PATH: /bin/zig
+          ZIG_PATH: zig
       - name: install compiler
-        run: opam install ocaml-cross --verbose
+        run: opam install ocaml-cross --verbose || cat /home/runner/work/opam-cross-generic/opam-cross-generic/_opam/.opam-switch/build/ocaml-cross.5.2.0/config.log
 
           
