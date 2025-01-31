@@ -90,7 +90,7 @@ post-messages: [
   {failure & jobs > 1 & opam-version >= "2.0.5"}
 ]
 extra-files: [
-  [ "build.sh.in" "sha256=461dc88f0e27826a45f497aba6c3283836a2a26793fcea96538ac1649910fd46" ]
+  [ "build.sh.in" "sha256=37391c0e3955f7e1ac07f5523a7fba83faec2cad9d56064954a12ef1eafb8cde" ]
   [ "install.sh" "sha256=6988e79c9cf65c77c85cd2e881f1995b054cdbb2f92e270b333ea597d1c65e71" ]
   [ "cross_5_2.patch" "sha256=11dcfdfb506113025f3a9b4fb2e798795c9126cbdeb93ba6f5512628fd49f439" ]
 ]
