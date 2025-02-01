@@ -46,6 +46,9 @@ depends: [
 
   # Support Packages
   "flexdll" {>= "0.42" & os = "win32"}
+
+  "conf-ocaml-cross"
+  "conf-zig-wrapper"
 ]
 setenv: CAML_LD_LIBRARY_PATH = "%{lib}%/stublibs"
 x-env-path-rewrite: [
