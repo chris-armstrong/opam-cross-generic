@@ -1,0 +1,107 @@
+diff --git a/Makefile b/Makefile
+index 7fabd20360..ae3f93a285 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1306,7 +1306,8 @@ runtime/build_config.h: $(ROOTDIR)/Makefile.config $(SAK)
+ ## Runtime libraries and programs
+ 
+ runtime/ocamlrun$(EXE): runtime/prims.$(O) runtime/libcamlrun.$(A)
+-	$(V_MKEXE)$(MKEXE) -o $@ $^ $(BYTECCLIBS)
++	cp $(OCAMLRUN) $@
++	chmod 755 $@
+ 
+ runtime/ocamlruns$(EXE): runtime/prims.$(O) runtime/libcamlrun_non_shared.$(A)
+ 	$(V_MKEXE)$(call MKEXE_VIA_CC,$@,$^ $(BYTECCLIBS))
+@@ -1384,6 +1385,8 @@ runtime/%.npic.$(O): OC_CFLAGS += $(OC_NATIVE_CFLAGS) $(SHAREDLIB_CFLAGS)
+ runtime/%.npic.$(O): OC_CPPFLAGS += $(OC_NATIVE_CPPFLAGS)
+ $(DEPDIR)/runtime/%.npic.$(D): OC_CPPFLAGS += $(OC_NATIVE_CPPFLAGS)
+ 
++runtime/zstd.npic.$(O): CC=$(SAK_CC)
++
+ ## Compilation of runtime C files
+ 
+ # The COMPILE_C_FILE macro below receives as argument the pattern
+@@ -2292,7 +2295,7 @@ ocamltex_SOURCES = tools/ocamltex.mli tools/ocamltex.ml
+ # configuration.
+ # Note: the following definitions apply to all the prerequisites
+ # of ocamltex.
+-$(ocamltex): CAMLC = $(OCAMLRUN) $(ROOTDIR)/ocamlc$(EXE) $(STDLIBFLAGS)
++$(ocamltex): CAMLC = $(CAMLC) $(STDLIBFLAGS)
+ $(ocamltex): OC_COMMON_LINKFLAGS += -linkall
+ $(ocamltex): VPATH += $(addprefix otherlibs/,str unix)
+ 
+@@ -2690,8 +2693,6 @@ ifeq "$(BOOTSTRAPPING_FLEXDLL)" "true"
+ endif
+ 	$(INSTALL_DATA) \
+ 	   utils/*.cmx parsing/*.cmx typing/*.cmx bytecomp/*.cmx \
+-	   toplevel/*.cmx toplevel/native/*.cmx \
+-	   toplevel/native/tophooks.cmi \
+ 	   file_formats/*.cmx \
+ 	   lambda/*.cmx \
+ 	   driver/*.cmx asmcomp/*.cmx middle_end/*.cmx \
+@@ -2705,7 +2706,6 @@ endif
+ 	$(INSTALL_DATA) \
+ 	   $(ocamlc_CMX_FILES) $(ocamlc_CMX_FILES:.cmx=.$(O)) \
+ 	   $(ocamlopt_CMX_FILES) $(ocamlopt_CMX_FILES:.cmx=.$(O)) \
+-	   $(ocamlnat_CMX_FILES:.cmx=.$(O)) \
+ 	   "$(INSTALL_COMPLIBDIR)"
+ ifeq "$(INSTALL_OCAMLNAT)" "true"
+ 	  $(INSTALL_PROG) ocamlnat$(EXE) "$(INSTALL_BINDIR)"
+diff --git a/stdlib/Makefile b/stdlib/Makefile
+index 50f825a1b3..b2bce8e83e 100644
+--- a/stdlib/Makefile
++++ b/stdlib/Makefile
+@@ -34,6 +34,8 @@ include $(ROOTDIR)/Makefile.common
+ # ../runtime/ocamlrun.
+ USE_BOOT_OCAMLC ?=
+ 
++STRIP ?= strip
++
+ ifeq "$(USE_BOOT_OCAMLC)" ""
+ CAMLC = $(OCAMLRUN) $(ROOTDIR)/ocamlc$(EXE)
+ else
+@@ -98,7 +100,7 @@ tmpheader.exe: $(HEADERPROGRAM).$(O)
+ 	$(V_MKEXE)$(call MKEXE_VIA_CC,$@,$^)
+ # FIXME This is wrong - mingw could invoke strip; MSVC equivalent?
+ ifneq "$(UNIX_OR_WIN32)" "win32"
+-	strip $@
++	echo $@
+ endif
+ 
+ stdlib.cma: $(OBJS)
+diff --git a/configure b/configure
+--- a/configure  
++++ b/configure 
+@@ -13973,7 +13973,7 @@
+     common_cflags="-O2 -fno-strict-aliasing -fwrapv";
+     internal_cflags="$cc_warnings -fno-common -fexcess-precision=standard \
+ -Wvla" ;; #(
+-  mingw-*-*-gcc-*) :
++  mingw-*) :
+     internal_cflags="-Wno-unused $cc_warnings \
+ -fexcess-precision=standard"
+     # TODO: see whether the code can be fixed to avoid -Wno-unused
+@@ -13981,8 +13981,6 @@
+     internal_cppflags='-D__USE_MINGW_ANSI_STDIO=0 -DUNICODE -D_UNICODE'
+     internal_cppflags="$internal_cppflags -DWINDOWS_UNICODE="
+     internal_cppflags="${internal_cppflags}\$(WINDOWS_UNICODE)" ;; #(
+-  mingw-*) :
+-    as_fn_error $? "Unsupported C compiler for a MinGW-w64 build" "$LINENO" 5 ;; #(
+   msvc-*) :
+     common_cflags="-nologo -O2 -Gy- -MD $cc_warnings"
+     common_cppflags="-D_CRT_SECURE_NO_DEPRECATE"
+--- a/tools/ocamlmklib.ml       
++++ b/tools/ocamlmklib.ml 
+@@ -252,7 +252,10 @@
+ let prepostfix pre name post =
+   let base = Filename.basename name in
+   let dir = Filename.dirname name in
+-  Filename.concat dir (pre ^ base ^ post)
++  let filename = pre ^ base ^ post in
++  if String.equal dir "." then
++    filename (* prevent Cygwin bugs specifying '.\' as the path *)
++  else Filename.concat dir filename
+
+ let transl_path s =
+   match Sys.os_type with
+
