@@ -7,7 +7,7 @@ on:
 permissions: read-all
 
 jobs:
-  aarch64-linux-gnu_5_.2:
+  aarch64-linux-gnu_5_2:
     strategy:
       fail-fast: false
       matrix:
@@ -41,7 +41,7 @@ jobs:
         run: opam install ocaml-cross --verbose 
 
           
-  aarch64-linux-gnu_5-3:
+  aarch64-linux-gnu_5_3:
     strategy:
       fail-fast: false
       matrix:
