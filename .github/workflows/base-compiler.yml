@@ -7,7 +7,7 @@ on:
 permissions: read-all
 
 jobs:
-  target aarch64-linux-gnu with ocaml 5_2:
+  aarch64-linux-gnu_5_.2:
     strategy:
       fail-fast: false
       matrix:
@@ -41,7 +41,7 @@ jobs:
         run: opam install ocaml-cross --verbose 
 
           
-  target aarch64-linux-gnu with ocaml 5_3:
+  aarch64-linux-gnu_5-3:
     strategy:
       fail-fast: false
       matrix:
@@ -68,7 +68,7 @@ jobs:
       - name: configure and install x86-64-linux-gnu cross
         run: opam install conf-ocaml-cross conf-zig-wrapper
         env:
-          HOST_TRIPLEbase: aarch64-linux-gnu
+          HOST_TRIPLE: aarch64-linux-gnu
           HOST_TARGET: aarch64-linux-gnu
           ZIG_PATH: zig
       - name: install compiler
