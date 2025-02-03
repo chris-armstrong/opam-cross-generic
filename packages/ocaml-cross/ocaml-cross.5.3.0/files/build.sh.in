@@ -173,7 +173,8 @@ then
 fi
 
 # work out host cc invocation
-host_cc=$( "$HOST_SWITCH/bin/ocamlc" -cocd138505ebcc8d23d73d2d4b4b32126e474bd1b4e0410fe12d2da48d541cf1banfig | grep "^c_compiler" | sed -e 's/c_compiler: //')
+host_cc=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^c_compiler" | sed -e 's/c_compiler: //')
+echo "--- host_cc=${host_cc}"
 
 echo "--- Clean all configuration and previous builds"
 cd ${BUILD_ROOT}
