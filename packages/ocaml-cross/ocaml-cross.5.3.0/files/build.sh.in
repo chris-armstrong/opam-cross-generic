@@ -173,8 +173,14 @@ then
 fi
 
 # work out host cc invocation
-host_cc=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^bytecomp_c_compiler" | sed -e 's/bytecomp_c_compiler: //')
+host_cc=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^c_compiler:" | sed -e 's/c_compiler: //')
+host_cflags=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^ocamlc_flags:" | sed -e 's/ocamlc_flags: //')
+host_c_libraries=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^bytecomp_c_libraries:" | sed -e 's/bytecomp_c_libraries: //')
+host_cppflags=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^ocamlc_cppflags:" | sed -e 's/ocamlc_cppflags: //')
 echo "--- host_cc=${host_cc}"
+echo "--- host_cflags=${host_cflags}"
+echo "--- host_c_libraries=${host_c_libraries}"
+echo "--- host_cppflags=${host_cppflags}"
 
 echo "--- Clean all configuration and previous builds"
 cd ${BUILD_ROOT}
@@ -207,8 +213,8 @@ export "PATH=$PREFIX/bin:$PATH"
 # Set up sak compiler
 cp Makefile.config Makefile.config.bak
 echo "SAK_CC=${host_cc}" >> Makefile.config
-echo 'SAK_CFLAGS=$(OC_CFLAGS) $(OC_CPPFLAGS)' >> Makefile.config
-echo 'SAK_LINK=$(SAK_CC) $(SAK_CFLAGS) $(OUTPUTEXE)$(1) $(2)' >> Makefile.config
+echo "SAK_CFLAGS=${host_cflags} ${host_cppflags}" >> Makefile.config
+echo "SAK_LINK=$(SAK_CC) $(SAK_CFLAGS) ${host_c_libraries} $(OUTPUTEXE)$(1) $(2)" >> Makefile.config
 # echo "MIN64CC=${zig_cc_wrapper}" >> Makefile.config
 echo 'LN=cp ' >> Makefile.build_config
 
