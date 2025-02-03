@@ -161,4 +161,15 @@ index 64e6d7e..a9dc132 100644
 +      [AC_CHECK_PROG([flexlink],[flexlink],[flexlink])])
  
    AS_IF([test -n "$flexlink" && test -z "$flexdll_source_dir"],[
-     OCAML_TEST_FLEXLINK([$flexlink], [$flexdll_chain],
+ diff --git a/ocaml-5.3.0/stdlib/Makefile b/ocaml-5.3.0-new/stdlib/Makefile
+index a7f2e60..2178eae 100644
+--- a/stdlib/Makefile
++++ b/stdlib/Makefile
+@@ -96,7 +96,6 @@ endif
+ .INTERMEDIATE: tmpheader.exe
+ tmpheader.exe: $(HEADERPROGRAM).$(O)
+        $(V_MKEXE)$(call MKEXE_VIA_CC,$@,$^)
+-       $(STRIP) $@
+
+ stdlib.cma: $(OBJS)
+        $(V_LINKC)$(CAMLC) -a -o $@ $^    OCAML_TEST_FLEXLINK([$flexlink], [$flexdll_chain],
