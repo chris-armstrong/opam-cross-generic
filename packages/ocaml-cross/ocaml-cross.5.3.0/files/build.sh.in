@@ -73,7 +73,7 @@ then
   exit 1
 fi
 
-if [ -z "$HOST_SWITCH" ] || [ -d "${HOST_SWITCH}" ]
+if [ ! -d "${HOST_SWITCH}" ]
 then
   echo "Host switch directory not found"
   exit 1
@@ -228,12 +228,16 @@ NATDYNLINK=$(get_host_variable "NATDYNLINK")
 NATDYNLINKOPTS=$(get_host_variable "NATDYNLINKOPTS")
 
 has_zstd="false"
-if [ $(expr "$( "${HOST_SWITCH}/bin/ocamlopt.opt" -config | grep "^bytecomp_c_libraries:" )" : "zstd") -gt 0 ]
+if [ $(expr "$( "${HOST_SWITCH}/bin/ocamlopt.opt" -config | grep "^bytecomp_c_libraries:" )" : ".*zstd") -gt 0 ]
 then
+  echo "-- zstd detected in host compiler! --"
   has_zstd="true"
+else
+  echo "-- zstd not detected in host compiler! -- $( "${HOST_SWITCH}/bin/ocamlopt.opt" -config | grep "^bytecomp_c_libraries:")"
 fi
 
 make_caml () {
+  echo "-> make_caml $*"
   make -j$CPU_COUNT \
        CAMLDEP="$CAMLDEP -depend" \
        OCAMLLEX="$OCAMLLEX" \
@@ -252,14 +256,13 @@ make_host () {
   CAMLOPT="$host_compiler_path/host-ocamlopt"
   [ "$machine" = "Cygwin" ] && CAMLOPT=$(cygpath -m "$(which "$CAMLOPT")")
   ZSTD_LIBS=
-  if [ $has_zstd = "true" ]
+  if [ "$has_zstd" = "true" ]
   then
-    ZSTD_LIBS="-lzstd"
+    ZSTD_LIBS=" -lzstd "
   fi
-
   make_caml \
     NATDYNLINK="$NATDYNLINK" NATDYNLINKOPTS="$NATDYNLINKOPTS" ZSTD_LIBS="${ZSTD_LIBS}" \
-    "$@"
+    $@
 }
 
 make_target () {
@@ -269,7 +272,11 @@ make_target () {
   CAMLOPT="${target_ocamlopt_wrapper}"
   [ "$machine" = "Cygwin" ] && CAMLOPT=$(cygpath -m "$CAMLOPT")
 
-  make_caml BUILD_ROOT="$build_root_native" TARGET_OCAMLC="$TARGET_OCAMLC" TARGET_OCAMLOPT="$TARGET_OCAMLOPT" "$@"
+  make_caml \
+    BUILD_ROOT="$build_root_native" \
+    TARGET_OCAMLC="$TARGET_OCAMLC" \
+    TARGET_OCAMLOPT="$TARGET_OCAMLOPT" \
+    "$@"
 }
 echo "---- MAKING HOST ----"
 make_host runtime 
