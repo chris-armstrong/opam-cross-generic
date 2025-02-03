@@ -73,7 +73,7 @@ then
   exit 1
 fi
 
-if [ -z "$HOST_SWITCH" ] || [ -d "${HOST_SWITCH}" ]
+if [ ! -d "${HOST_SWITCH}" ]
 then
   echo "Host switch directory not found"
   exit 1
