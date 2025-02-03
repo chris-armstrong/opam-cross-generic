@@ -60,7 +60,7 @@ build-env: [
   [ASAN_OPTIONS = "detect_leaks=0,exitcode=0"]
 ]
 build: [
-  [ "bash" "./build.sh" 
+  [ "sh" "./build.sh" 
     "-p" "%{prefix}%/cross-sysroot" 
     "-o" "%{prefix}%"
     "-g" "%{conf-ocaml-cross:host_target}%" 
@@ -70,13 +70,13 @@ build: [
   ]
 ]
 substs: [ "build.sh" ]
-install: [ "bash" "install.sh" "%{prefix}%/cross-sysroot" "%{prefix}%" "cross"]
+install: [ "sh" "install.sh" "%{prefix}%/cross-sysroot" "%{prefix}%" "cross"]
 url {
   src: "https://github.com/ocaml/ocaml/releases/download/5.3.0/ocaml-5.3.0.tar.gz"
   checksum: "sha256=22c1dd9de21bf43b62d1909041fb5fad648905227bf69550a6a6bef31e654f38"
 }
 extra-files: [
-  [ "build.sh.in" "sha256=20903d50ca3f739622eab626e6af0bef0fce73927307a71dc493ed2b4edfcccb" ]
+  [ "build.sh.in" "sha256=216e940bee83b89d7d0f6c494d3b6e497840c3d6ee042258e7a0e8dce3a00d3d" ]
   [ "install.sh" "sha256=6988e79c9cf65c77c85cd2e881f1995b054cdbb2f92e270b333ea597d1c65e71" ]
   [ "cross_5_3.patch" "sha256=414fa63d268e0cfc14abe18f6a30e940a5c042fccc06e18f4d937b11f2ceb234" ]
 ]

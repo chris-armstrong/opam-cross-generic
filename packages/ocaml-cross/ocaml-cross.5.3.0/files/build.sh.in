@@ -1,10 +1,10 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e
 
 PREFIX=
 CPU_COUNT=4
-SOURCE_DIR=`realpath ${PWD}`
+SOURCE_DIR=$(realpath "${PWD}")
 HOST_SWITCH=
 OCAML_HOST_TARGET=
 ZIG=zig
@@ -61,8 +61,7 @@ then
   exit 1
 fi
 
-which -s "$ZIG" > /dev/null
-if [ $? != 0 ]
+if ! which -s "$ZIG" > /dev/null
 then
   echo "Zig binary not executable"
   exit 1
@@ -74,19 +73,20 @@ then
   exit 1
 fi
 
-if [[ -z "$HOST_SWITCH" || ! -d "${HOST_SWITCH}" ]]
+if [ -z "$HOST_SWITCH" ] || [ -d "${HOST_SWITCH}" ]
 then
   echo "Host switch directory not found"
   exit 1
 fi
 
-if [[ ! -x "${HOST_SWITCH}/bin/ocamlc.opt" || ! -x "${HOST_SWITCH}/bin/ocamlopt.opt" ]]
+if [ ! -x "${HOST_SWITCH}/bin/ocamlc.opt" ] || [ ! -x "${HOST_SWITCH}/bin/ocamlopt.opt" ]
 then
   echo "Host compiler not found"
   exit 1
 fi
 
-case "$(uname -s)" in
+unameOut=$(uname -s)
+case "$unameOut" in
     Linux*)     machine=Linux;;
     Darwin*)    machine=Mac;;
     CYGWIN*)    machine=Cygwin;;
@@ -97,7 +97,7 @@ esac
 
 # Make a shell wrapper for $2 that passes its arguments appended
 # to the end, stored in $1
-function make_wrapper() {
+make_wrapper() {
   wrapper_script_path=$1
   caml_bin=$2
   cat << EOF > "$wrapper_script_path"
@@ -113,8 +113,8 @@ EOF
 
 # Make a `.cmd` wrapper that can be called from ocamlmklib
 # using the standard windows cmd.exe shell (using Unix.command)
-function make_windows_cmd_wrapper() {
-  if [[ "$machine" == "Cygwin" ]]
+make_windows_cmd_wrapper() {
+  if [ "$machine" = "Cygwin" ]
   then
     wrapper_script_path=$1
     cmd_script_path=$(dirname "$1")/$(basename "$1").cmd
@@ -155,7 +155,7 @@ make_windows_cmd_wrapper "$host_ocamlopt_wrapper"
 
 # Anchor the BUILD_ROOT with a native (windows) path that works outside cygwin
 build_root_native=$BUILD_ROOT
-[[ "$machine" == "Cygwin" ]] && build_root_native=$(cygpath -m "$BUILD_ROOT")
+[ "$machine" = "Cygwin" ] && build_root_native=$(cygpath -m "$BUILD_ROOT")
 
 # -- target ocaml compiler wrapper scripts (stored in temporary directory)
 target_ocamlc_wrapper=$(mktemp -t target-ocamlc-XXXXX)
@@ -167,8 +167,7 @@ make_wrapper "$target_ocamlopt_wrapper" "$build_root_native/ocamlopt.opt -I $bui
 make_windows_cmd_wrapper "$target_ocamlopt_wrapper"
 
 # Disable function sections if the build machine doesn't support it
-has_function_sections=$($HOST_SWITCH/bin/ocamlopt.opt -config | grep function_sections | cut -d ':' -f 2)
-if [[ "$has_function_sections" =~ "false" ]]
+if [ $(expr "$("$HOST_SWITCH/bin/ocamlopt.opt" -config | grep "function_sections" | cut -d ':' -f 2)" : 'false') -gt 0 ]
 then
 	EXTRA_CONFIG_OPTS="${EXTRA_CONFIG_OPTS} --disable-function-sections"
 fi
@@ -181,9 +180,9 @@ make distclean
 # bootstrap
 echo "--- Build bootstrap (build -> host) compiler"
 prefix_native="$PREFIX"
-[[ "$machine" == "Cygwin" ]] && prefix_native=$(cygpath -m "$PREFIX")
+[ "$machine" = "Cygwin" ] && prefix_native=$(cygpath -m "$PREFIX")
 ln_use="ln -s "
-[[ "$machine" == "Cygwin" ]] && ln_use="cp "
+[ "$machine" = "Cygwin" ] && ln_use="cp "
 echo "configuring with --host=${OCAML_HOST_TARGET} --prefix=${prefix_native} ${EXTRA_CONFIG_OPTS}"
 export "PATH=$PREFIX/bin:$PATH"
 # FIXME: patch configure to ignore flexlink when the host triplet is not Cygwin/MingW 
@@ -206,7 +205,7 @@ cp Makefile.config Makefile.config.bak
 echo "SAK_CC=cc" >> Makefile.config
 echo 'SAK_CFLAGS=$(OC_CFLAGS) $(OC_CPPFLAGS)' >> Makefile.config
 echo 'SAK_LINK=$(SAK_CC) $(SAK_CFLAGS) $(OUTPUTEXE)$(1) $(2)' >> Makefile.config
-echo "MIN64CC=${zig_cc_wrapper}" >> Makefile.config
+# echo "MIN64CC=${zig_cc_wrapper}" >> Makefile.config
 echo 'LN=cp ' >> Makefile.build_config
 
 # Set paths to host switch
@@ -214,9 +213,9 @@ OCAMLRUN="$HOST_SWITCH/bin/ocamlrun"
 OCAMLLEX="$HOST_SWITCH/bin/ocamllex"
 OCAMLYACC="$HOST_SWITCH/bin/ocamlyacc"
 CAMLDEP="$HOST_SWITCH/bin/ocamlc"
-DYNAMIC_LIBS="-I $HOST_SWITCH/lib/ocaml/stublibs"
-HOST_STATIC_LIBS="-I $HOST_SWITCH/lib/ocaml"
-TARGET_STATIC_LIBS="-I $build_root_native/stdlib -I $build_root_native/otherlibs/unix"
+#DYNAMIC_LIBS="-I $HOST_SWITCH/lib/ocaml/stublibs"
+#HOST_STATIC_LIBS="-I $HOST_SWITCH/lib/ocaml"
+#TARGET_STATIC_LIBS="-I $build_root_native/stdlib -I $build_root_native/otherlibs/unix"
 
 HOST_MAKEFILE_CONFIG="$HOST_SWITCH/lib/ocaml/Makefile.config"
 
@@ -229,7 +228,7 @@ NATDYNLINK=$(get_host_variable "NATDYNLINK")
 NATDYNLINKOPTS=$(get_host_variable "NATDYNLINKOPTS")
 
 has_zstd="false"
-if [[ "$( "${HOST_SWITCH}/bin/ocamlopt.opt" -config | grep "^bytecomp_c_libraries:" )" =~ "zstd" ]]
+if [ $(expr "$( "${HOST_SWITCH}/bin/ocamlopt.opt" -config | grep "^bytecomp_c_libraries:" )" : "zstd") -gt 0 ]
 then
   has_zstd="true"
 fi
@@ -243,17 +242,17 @@ make_caml () {
        NEW_OCAMLRUN="$OCAMLRUN" \
        CAMLC="$CAMLC" OCAMLC="$CAMLC" \
        CAMLOPT="$CAMLOPT" OCAMLOPT="$CAMLOPT" \
-       $@
+       "$@"
 }
 
 make_host () {
-  echo "--making host: $@--"
+  echo "--making host: $*--"
   CAMLC="$host_compiler_path/host-ocamlc"
-  [[ "$machine" == "Cygwin" ]] && CAMLC=`cygpath -m $(which $CAMLC)`
+  [ "$machine" = "Cygwin" ] && CAMLC=$(cygpath -m "$(which "$CAMLC")")
   CAMLOPT="$host_compiler_path/host-ocamlopt"
-  [[ "$machine" == "Cygwin" ]] && CAMLOPT=`cygpath -m $(which $CAMLOPT)`
+  [ "$machine" = "Cygwin" ] && CAMLOPT=$(cygpath -m "$(which "$CAMLOPT")")
   ZSTD_LIBS=
-  if [[ $has_zstd == "true" ]]
+  if [ $has_zstd = "true" ]
   then
     ZSTD_LIBS="-lzstd"
   fi
@@ -264,11 +263,11 @@ make_host () {
 }
 
 make_target () {
-  echo "making target: $@"
+  echo "making target: $*"
   CAMLC="${target_ocamlc_wrapper}"
-  [[ "$machine" == "Cygwin" ]] && CAMLC=`cygpath -m $(which $CAMLC)`
+  [ "$machine" = "Cygwin" ] && CAMLC=$(cygpath -m "$CAMLC")
   CAMLOPT="${target_ocamlopt_wrapper}"
-  [[ "$machine" == "Cygwin" ]] && CAMLOPT=`cygpath -m $(which $CAMLOPT)`
+  [ "$machine" = "Cygwin" ] && CAMLOPT=$(cygpath -m "$CAMLOPT")
 
   make_caml BUILD_ROOT="$build_root_native" TARGET_OCAMLC="$TARGET_OCAMLC" TARGET_OCAMLOPT="$TARGET_OCAMLOPT" "$@"
 }
@@ -298,8 +297,7 @@ make_target compilerlibs/ocamlcommon.cmxa \
             compilerlibs/ocamlbytecomp.cmxa \
             compilerlibs/ocamloptcomp.cmxa 
             # compilerlibs/ocamltoplevel.cmxa
-if [[ "$OCAML_VERSION" =~ '^5\.' ]]
+if [ $(expr "$OCAML_VERSION" : '^5\.') -gt 0 ]
 then
   make_target othertools
 fi
-
