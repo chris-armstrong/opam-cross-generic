@@ -232,6 +232,8 @@ if [ $(expr "$( "${HOST_SWITCH}/bin/ocamlopt.opt" -config | grep "^bytecomp_c_li
 then
   echo "-- zstd detected in host compiler! --"
   has_zstd="true"
+else
+  echo "-- zstd not detected in host compiler! -- $( "${HOST_SWITCH}/bin/ocamlopt.opt" -config | grep "^bytecomp_c_libraries:")"
 fi
 
 make_caml () {
