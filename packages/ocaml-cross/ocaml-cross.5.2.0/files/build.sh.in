@@ -228,7 +228,7 @@ NATDYNLINK=$(get_host_variable "NATDYNLINK")
 NATDYNLINKOPTS=$(get_host_variable "NATDYNLINKOPTS")
 
 has_zstd="false"
-if [ $(expr "$( "${HOST_SWITCH}/bin/ocamlopt.opt" -config | grep "^bytecomp_c_libraries:" )" : "zstd") -gt 0 ]
+if [ $(expr "$( "${HOST_SWITCH}/bin/ocamlopt.opt" -config | grep "^bytecomp_c_libraries:" )" : ".*zstd") -gt 0 ]
 then
   echo "-- zstd detected in host compiler! --"
   has_zstd="true"
