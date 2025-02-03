@@ -49,6 +49,9 @@ depends: [
 
   "conf-ocaml-cross"
   "conf-zig-wrapper"
+
+  # ocamlfind (needed for findlib extension)
+  "ocamlfind"
 ]
 setenv: CAML_LD_LIBRARY_PATH = "%{lib}%/stublibs"
 x-env-path-rewrite: [
