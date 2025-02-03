@@ -242,6 +242,7 @@ make_caml () {
        NEW_OCAMLRUN="$OCAMLRUN" \
        CAMLC="$CAMLC" OCAMLC="$CAMLC" \
        CAMLOPT="$CAMLOPT" OCAMLOPT="$CAMLOPT" \
+       ZSTD_LIBS="$ZSTD_LIBS"
        "$@"
 }
 
