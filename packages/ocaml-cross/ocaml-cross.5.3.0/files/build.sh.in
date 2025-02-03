@@ -175,7 +175,7 @@ fi
 # work out host cc invocation
 host_cc=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^c_compiler:" | sed -e 's/c_compiler: //')
 host_cflags=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^ocamlc_flags:" | sed -e 's/ocamlc_flags: //')
-host_c_libraries=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^bytecomp_c_libraries:" | sed -e 's/bytecomp_c_libraries: //')
+host_c_libraries=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^bytecomp_c_libraries:" | sed -e 's/bytecomp_c_libraries: //' | sed -i 's/ -lgcc_eh//')
 host_cppflags=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^ocamlc_cppflags:" | sed -e 's/ocamlc_cppflags: //')
 echo "--- host_cc=${host_cc}"
 echo "--- host_cflags=${host_cflags}"
