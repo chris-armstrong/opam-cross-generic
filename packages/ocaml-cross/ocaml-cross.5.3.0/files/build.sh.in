@@ -172,6 +172,9 @@ then
 	EXTRA_CONFIG_OPTS="${EXTRA_CONFIG_OPTS} --disable-function-sections"
 fi
 
+# work out host cc invocation
+host_cc=$( "$HOST_SWITCH/bin/ocamlc" -cocd138505ebcc8d23d73d2d4b4b32126e474bd1b4e0410fe12d2da48d541cf1banfig | grep "^c_compiler" | sed -e 's/c_compiler: //')
+
 echo "--- Clean all configuration and previous builds"
 cd ${BUILD_ROOT}
 rm -f config.cache
@@ -202,7 +205,7 @@ export "PATH=$PREFIX/bin:$PATH"
 
 # Set up sak compiler
 cp Makefile.config Makefile.config.bak
-echo "SAK_CC=cc" >> Makefile.config
+echo "SAK_CC=${host_cc}" >> Makefile.config
 echo 'SAK_CFLAGS=$(OC_CFLAGS) $(OC_CPPFLAGS)' >> Makefile.config
 echo 'SAK_LINK=$(SAK_CC) $(SAK_CFLAGS) $(OUTPUTEXE)$(1) $(2)' >> Makefile.config
 # echo "MIN64CC=${zig_cc_wrapper}" >> Makefile.config
