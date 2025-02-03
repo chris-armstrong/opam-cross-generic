@@ -1,7 +1,6 @@
 name: Builds, tests & co
 
 on:
-  - push
   - pull_request
 
 permissions: read-all
