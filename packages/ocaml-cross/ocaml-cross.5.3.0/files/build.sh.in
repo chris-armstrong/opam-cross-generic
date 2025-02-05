@@ -214,7 +214,7 @@ export "PATH=$PREFIX/bin:$PATH"
 cp Makefile.config Makefile.config.bak
 echo "SAK_CC=gcc" >> Makefile.config
 echo 'SAK_CFLAGS=$(OC_FLAGS) $(OC_CPPFLAGS)' >> Makefile.config
-echo "SAK_LINK=\$(SAK_CC) \$(SAK_CFLAGS) \$(OUTPUTEXE)\$(1) \$(2)" >> Makefile.config
+echo "SAK_LINK=\$(SAK_CC) \$(SAK_CFLAGS) ${host_c_libraries} \$(OUTPUTEXE)\$(1) \$(2)" >> Makefile.config
 # echo "MIN64CC=${zig_cc_wrapper}" >> Makefile.config
 echo 'LN=cp ' >> Makefile.build_config
 
