@@ -175,7 +175,7 @@ fi
 # work out host cc invocation
 # retrieve a host variable from the Makefile.config of the host compiler
 get_host_variable () {
-  cat "$HOST_MAKEFILE_CONFIG" | grep "$1=" | awk -F '=' '{print $2}'
+  cat "$HOST_MAKEFILE_CONFIG" | grep "^$1=" | awk -F '=' '{print $2}'
 }
 
 echo "--- transposing host compiler configuration"
