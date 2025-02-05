@@ -181,7 +181,7 @@ echo "--- host_cc=${host_cc}"
 echo "--- host_cflags=${host_cflags}"
 echo "--- host_c_libraries=${host_c_libraries}"
 echo "--- host_cppflags=${host_cppflags}"
-
+ "-lmingw"
 echo "--- Clean all configuration and previous builds"
 cd ${BUILD_ROOT}
 rm -f config.cache
@@ -212,11 +212,9 @@ export "PATH=$PREFIX/bin:$PATH"
 
 # Set up sak compiler
 cp Makefile.config Makefile.config.bak
-echo "SAK_CC=gcc" >> Makefile.config
-echo 'SAK_CFLAGS=$(OC_FLAGS) $(OC_CPPFLAGS)' >> Makefile.config
-mingw32=""
-[ "$machine" = "MinGW" ] && mingw32="-lmingw32"
-echo "SAK_LINK=\$(SAK_CC) \$(SAK_CFLAGS) ${mingw32} \$(OUTPUTEXE)\$(1) \$(2)" >> Makefile.config
+echo "SAK_CC=${host_cc}" >> Makefile.config
+echo "SAK_CFLAGS=${host_cc_flags} ${host_cppflags}" >> Makefile.config
+echo "SAK_LINK=\$(SAK_CC) \$(SAK_CFLAGS) \$(OUTPUTEXE)\$(1) \$(2)" >> Makefile.config
 # echo "MIN64CC=${zig_cc_wrapper}" >> Makefile.config
 echo 'LN=cp ' >> Makefile.build_config
 
