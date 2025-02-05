@@ -173,10 +173,27 @@ then
 fi
 
 # work out host cc invocation
-host_cc=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^c_compiler:" | sed -e 's/c_compiler: //')
-host_cflags=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^ocamlc_flags:" | sed -e 's/ocamlc_flags: //')
-host_c_libraries=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^bytecomp_c_libraries:" | sed -e 's/bytecomp_c_libraries: //' | sed -e 's/ -lgcc_eh//')
-host_cppflags=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^ocamlc_cppflags:" | sed -e 's/ocamlc_cppflags: //')
+# retrieve a host variable from the Makefile.config of the host compiler
+get_host_variable () {
+  cat "$HOST_MAKEFILE_CONFIG" | grep "$1=" | awk -F '=' '{print $2}'
+}
+
+echo "--- transposing host compiler configuration"
+HOST_MAKEFILE_CONFIG="$HOST_SWITCH/lib/ocaml/Makefile.config"
+echo "======= > ocamlc -config"
+"$HOST_SWITCH/bin/ocamlc" -config
+echo "======= > Makefile.config"
+cat "$HOST_MAKEFILE_CONFIG"
+echo "======="
+
+#host_cc=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^c_compiler:" | sed -e 's/c_compiler: //')
+host_cc=$(get_host_variable "CC")
+#host_cflags=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^ocamlc_flags:" | sed -e 's/ocamlc_flags: //')
+host_cflags=$(get_host_variable "CFLAGS")
+#host_c_libraries=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^bytecomp_c_libraries:" | sed -e 's/bytecomp_c_libraries: //' | sed -e 's/ -lgcc_eh//')
+host_c_libraries=$(get_host_variable "LDFLAGS")
+#host_cppflags=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^ocamlc_cppflags:" | sed -e 's/ocamlc_cppflags: //')
+host_cppflags=$(get_host_variable "CPPFLAGS")
 echo "--- host_cc=${host_cc}"
 echo "--- host_cflags=${host_cflags}"
 echo "--- host_c_libraries=${host_c_libraries}"
@@ -226,13 +243,6 @@ CAMLDEP="$HOST_SWITCH/bin/ocamlc"
 #DYNAMIC_LIBS="-I $HOST_SWITCH/lib/ocaml/stublibs"
 #HOST_STATIC_LIBS="-I $HOST_SWITCH/lib/ocaml"
 #TARGET_STATIC_LIBS="-I $build_root_native/stdlib -I $build_root_native/otherlibs/unix"
-
-HOST_MAKEFILE_CONFIG="$HOST_SWITCH/lib/ocaml/Makefile.config"
-
-# retrieve a host variable from the Makefile.config of the host compiler
-get_host_variable () {
-  cat $HOST_MAKEFILE_CONFIG | grep "$1=" | awk -F '=' '{print $2}'
-}
 
 NATDYNLINK=$(get_host_variable "NATDYNLINK")
 NATDYNLINKOPTS=$(get_host_variable "NATDYNLINKOPTS")
