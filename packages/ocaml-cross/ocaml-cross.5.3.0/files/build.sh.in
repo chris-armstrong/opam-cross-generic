@@ -215,7 +215,7 @@ cp Makefile.config Makefile.config.bak
 echo "SAK_CC=${host_cc}" >> Makefile.config
 echo "SAK_CFLAGS=${host_cflags} ${host_cppflags}" >> Makefile.config
 echo "SAK_LINK=\$(SAK_CC) \$(SAK_CFLAGS) \$(OUTPUTEXE)\$(1) \$(2)" >> Makefile.config
-echo "MIN64CC=${host_cc}" >> Makefile.config
+#echo "MIN64CC=${host_cc}" >> Makefile.config
 echo 'LN=cp ' >> Makefile.build_config
 
 # Set paths to host switch
