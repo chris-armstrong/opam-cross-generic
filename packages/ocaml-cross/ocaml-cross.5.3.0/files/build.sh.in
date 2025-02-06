@@ -233,7 +233,7 @@ if [ "$machine" = "MinGW" ] || [ "$machine" = "Cygwin" ]
 then
   echo "SAK_CC=${ZIG} cc" >> Makefile.config # fuck it lets just use zig because x86_64-w64-mingw32-gcc wants to be broken on Windows
   echo "SAK_CFLAGS=${host_cflags} ${host_cppflags}" >> Makefile.config
-  echo "SAK_LINK=\$(SAK_CC) \$(SAK_CFLAGS) -lmsvcrt -lgdi32 -ladvapi32 -lshell32 -luser32 -lkernel32 \$(OUTPUTEXE)\$(1) \$(2)" >> Makefile.config
+  echo "SAK_LINK=\$(SAK_CC) \$(SAK_CFLAGS) -lgdi32 -ladvapi32 -lshell32 -luser32 -lkernel32 \$(OUTPUTEXE)\$(1) \$(2)" >> Makefile.config
 else
   echo "SAK_CC=${host_cc}" >> Makefile.config
   echo "SAK_CFLAGS=${host_cflags} ${host_cppflags}" >> Makefile.config
