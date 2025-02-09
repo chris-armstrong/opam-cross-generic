@@ -208,7 +208,7 @@ make_wrapper "$target_ocamlopt_wrapper" "$build_root_native/ocamlopt.opt -I $bui
 make_windows_cmd_wrapper "$target_ocamlopt_wrapper"
 
 # Disable function sections if the build machine doesn't support it
-if [ "$(get_host_ocamlc_variable "function_sections")" = "true" ]
+if [ "$(get_host_ocamlc_variable "function_sections")" != "true" ]
 then
 	EXTRA_CONFIG_OPTS="${EXTRA_CONFIG_OPTS} --disable-function-sections"
   echo "--- function sections disabled on host, disabling for target"
@@ -282,7 +282,7 @@ NATDYNLINK=$(get_host_variable "NATDYNLINK")
 NATDYNLINKOPTS=$(get_host_variable "NATDYNLINKOPTS")
 
 has_zstd="false"
-if [ "$(expr "$(get_host_ocamlc_variable "bytecomb_c_libraries")" : ".*zstd" )" -gt 0 ]
+if [ "$(expr "$(get_host_ocamlc_variable "bytecomp_c_libraries")" : ".*zstd" )" -gt 0 ]
 then
   echo "-- zstd detected in host compiler! --"
   has_zstd="true"
