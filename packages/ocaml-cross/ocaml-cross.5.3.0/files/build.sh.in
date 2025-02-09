@@ -2,6 +2,7 @@
 
 set -e
 
+# determine runtime machine
 unameOut=$(uname -s)
 case "$unameOut" in
     Linux*)     machine=Linux;;
@@ -16,14 +17,13 @@ PREFIX=
 CPU_COUNT=4
 SOURCE_DIR=$(realpath "${PWD}")
 HOST_SWITCH=
-OCAML_HOST_TARGET=
 ZIG=zig
 EXTRA_CONFIG_OPTS=
 OCAML_VERSION=5.2
 
-usage () { echo "$0 -p <prefix> -o <host_switch> -g <host_target> -t <ocaml_host_target> [-c <cpu count>] [-s <sources_dir>] [-z <path_to_zig_executable>] [-a <extra-config-opts>]"; exit 1; }
+usage () { echo "$0 -p <prefix> -o <host_switch> -g <host_target> [-c <cpu count>] [-s <sources_dir>] [-z <path_to_zig_executable>] [-a <extra-config-opts>] -v <ocaml_version>"; exit 1; }
 
-while getopts ":hp:t:c:s:z:g:o:a:" option; do
+while getopts ":hp:t:c:s:z:g:o:a:v:" option; do
   case $option in
     p)
       PREFIX=${OPTARG}
@@ -39,15 +39,15 @@ while getopts ":hp:t:c:s:z:g:o:a:" option; do
     z)
       ZIG=${OPTARG}
       ;;
+    v)
+      OCAML_VERSION=${OPTARG}
+      ;;
     g)
       HOST_TARGET=${OPTARG}
       ;;
     o)
       HOST_SWITCH=${OPTARG}
       [ "$machine" = "Cygwin" ] && HOST_SWITCH=$(cygpath "$HOST_SWITCH")
-      ;;
-    t)
-      OCAML_HOST_TARGET=${OPTARG}
       ;;
     a)
       EXTRA_CONFIG_OPTS=${OPTARG}
@@ -67,6 +67,7 @@ echo "Host Target: ${HOST_TARGET}"
 echo "Zig Compiler: ${ZIG}"
 echo "Host Switch: ${HOST_SWITCH}"
 echo "Sources Dir: ${SOURCE_DIR}"
+echo "OCaml Version: ${OCAML_VERSION}"
 
 if [ -z "${PREFIX}" ]
 then
@@ -98,7 +99,13 @@ then
   exit 1
 fi
 
+# OCaml is built in its source directory
+BUILD_ROOT="${SOURCE_DIR}"
 
+# Configuration of host switch
+HOST_MAKEFILE_CONFIG="$HOST_SWITCH/lib/ocaml/Makefile.config"
+
+# make_wrapper <script_path> <binary_to_wrap>
 # Make a shell wrapper for $2 that passes its arguments appended
 # to the end, stored in $1
 make_wrapper() {
@@ -115,8 +122,11 @@ EOF
   chmod u+x "$wrapper_script_path"
 }
 
+# make_windows_cmd_wrapper <script_path>
+#
 # Make a `.cmd` wrapper that can be called from ocamlmklib
 # using the standard windows cmd.exe shell (using Unix.command)
+# to run the specified script in Cygwin bash
 make_windows_cmd_wrapper() {
   if [ "$machine" = "Cygwin" ]
   then
@@ -140,8 +150,26 @@ EOF
   fi
 }
 
-# OCaml is built in its source directory
-BUILD_ROOT=${SOURCE_DIR}
+# trim <string>
+#
+# trim the specified string of leading and trailing whitespace
+trim() {
+  echo "$1" | sed -e 's/^[[:space:]]*//;s/[[:space:]]*$//'
+}
+
+# get_host_variable <variable_name>
+# 
+# get a variable from variable from the Makefile.config of the host switch
+get_host_variable () {
+  grep "^$1=" "$HOST_MAKEFILE_CONFIG" | awk -F '=' '{print $2}'
+}
+
+# get_host_ocamlc_variable <variable_name>
+# 
+# retrieve variable from `ocamlc -config` of host switch
+get_host_ocamlc_variable () {
+  trim "$("$("$HOST_SWITCH/bin/ocamlc" -config | grep "^$1:" | cut -d ':' -f 2)")"
+}
 
 # ###############################
 # Create OCaml and Compiler wrapper scripts (assists with multi-arg changes)
@@ -149,9 +177,12 @@ BUILD_ROOT=${SOURCE_DIR}
 # -- host compiler wrapper scripts (anchored in the build root)
 host_compiler_path="$BUILD_ROOT/host-bin"
 mkdir -p "$host_compiler_path"
-host_ocamlc_wrapper="$host_compiler_path/host-ocamlc"
+
+# Get the native path (in Windows terms) of the host switch
 host_switch_native="$HOST_SWITCH"
 [ "$machine" = "Cygwin" ] && host_switch_native=$(cygpath -m "$host_switch_native")
+
+host_ocamlc_wrapper="$host_compiler_path/host-ocamlc"
 make_wrapper "$host_ocamlc_wrapper" "$host_switch_native/bin/ocamlc.opt -I ${host_switch_native}/lib/ocaml -I ${host_switch_native}/lib/ocaml/stublibs -I +unix -nostdlib "
 make_windows_cmd_wrapper "$host_ocamlc_wrapper"
 
@@ -173,39 +204,31 @@ make_wrapper "$target_ocamlopt_wrapper" "$build_root_native/ocamlopt.opt -I $bui
 make_windows_cmd_wrapper "$target_ocamlopt_wrapper"
 
 # Disable function sections if the build machine doesn't support it
-if [ $(expr "$("$HOST_SWITCH/bin/ocamlopt.opt" -config | grep "function_sections" | cut -d ':' -f 2)" : 'false') -gt 0 ]
+if [ "$(get_host_ocamlc_variable "function_sections")" = "true" ]
 then
 	EXTRA_CONFIG_OPTS="${EXTRA_CONFIG_OPTS} --disable-function-sections"
+  echo "--- function sections disabled on host, disabling for target"
 fi
 
-# work out host cc invocation
-# retrieve a host variable from the Makefile.config of the host compiler
-get_host_variable () {
-  cat "$HOST_MAKEFILE_CONFIG" | grep "^$1=" | awk -F '=' '{print $2}'
-}
-
 echo "--- transposing host compiler configuration"
-HOST_MAKEFILE_CONFIG="$HOST_SWITCH/lib/ocaml/Makefile.config"
+
 echo "======= > ocamlc -config"
 "$HOST_SWITCH/bin/ocamlc" -config
 echo "======= > Makefile.config"
 cat "$HOST_MAKEFILE_CONFIG"
 echo "======="
 
-#host_cc=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^c_compiler:" | sed -e 's/c_compiler: //')
 host_cc=$(get_host_variable "CC")
-#host_cflags=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^ocamlc_flags:" | sed -e 's/ocamlc_flags: //')
 host_cflags=$(get_host_variable "CFLAGS")
-#host_c_libraries=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^bytecomp_c_libraries:" | sed -e 's/bytecomp_c_libraries: //' | sed -e 's/ -lgcc_eh//')
 host_c_libraries=$(get_host_variable "LDFLAGS")
-#host_cppflags=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^ocamlc_cppflags:" | sed -e 's/ocamlc_cppflags: //')
 host_cppflags=$(get_host_variable "CPPFLAGS")
-windows_unicode="$("$HOST_SWITCH/bin/ocamlc" -config | grep "^windows_unicode: " | sed -e 's/^windows_unicode: \(true\|false\)[[:space:]]*/\1/')"
+windows_unicode="$(get_host_ocamlc_variable "windows_unicode")"
+
 echo "--- host_cc=${host_cc}"
 echo "--- host_cflags=${host_cflags}"
 echo "--- host_c_libraries=${host_c_libraries}"
 echo "--- host_cppflags=${host_cppflags}"
-echo "--- windows_unicode=${windows_unicode}'"
+echo "--- windows_unicode='${windows_unicode}'"
 
 echo "--- Clean all configuration and previous builds"
 cd "${BUILD_ROOT}"
@@ -232,12 +255,10 @@ export "PATH=$PREFIX/bin:$PATH"
   "LD=${HOST_TARGET}-target-cc" \
   "LN=${ln_use}"
 
-# Export path to host ocaml compiler
-# export "PATH=$host_compiler_path:$PATH"
-
 # Set up sak compiler
 cp Makefile.config Makefile.config.bak
 echo "SAK_CC=${ZIG} cc" >> Makefile.config # fuck it lets just use zig because x86_64-w64-mingw32-gcc wants to be broken on Windows
+# shellcheck disable=SC2016
 echo 'SAK_CFLAGS=$(OC_CFLAGS) $(OC_CPPFLAGS)' >> Makefile.config
 if [ "$windows_unicode" = "true" ]
 then
@@ -245,7 +266,6 @@ then
 else 
   echo "SAK_LINK=\$(SAK_CC) \$(SAK_CFLAGS) \$(OUTPUTEXE)\$(1) \$(2)" >> Makefile.config
 fi
-#echo "MIN64CC=${host_cc}" >> Makefile.config
 echo 'LN=cp ' >> Makefile.build_config
 
 # Set paths to host switch
@@ -253,15 +273,12 @@ OCAMLRUN="$HOST_SWITCH/bin/ocamlrun"
 OCAMLLEX="$HOST_SWITCH/bin/ocamllex"
 OCAMLYACC="$HOST_SWITCH/bin/ocamlyacc"
 CAMLDEP="$HOST_SWITCH/bin/ocamlc"
-#DYNAMIC_LIBS="-I $HOST_SWITCH/lib/ocaml/stublibs"
-#HOST_STATIC_LIBS="-I $HOST_SWITCH/lib/ocaml"
-#TARGET_STATIC_LIBS="-I $build_root_native/stdlib -I $build_root_native/otherlibs/unix"
 
 NATDYNLINK=$(get_host_variable "NATDYNLINK")
 NATDYNLINKOPTS=$(get_host_variable "NATDYNLINKOPTS")
 
 has_zstd="false"
-if [ $(expr "$( "${HOST_SWITCH}/bin/ocamlopt.opt" -config | grep "^bytecomp_c_libraries:" )" : ".*zstd") -gt 0 ]
+if [ "$(expr "$(get_host_ocamlc_variable "bytecomb_c_libraries")" : ".*zstd" )" -gt 0 ]
 then
   echo "-- zstd detected in host compiler! --"
   has_zstd="true"
@@ -271,7 +288,7 @@ fi
 
 make_caml () {
   echo "-> make_caml $*"
-  make -j$CPU_COUNT \
+  make "-j$CPU_COUNT" \
        CAMLDEP="$CAMLDEP -depend" \
        OCAMLLEX="$OCAMLLEX" \
        OCAMLYACC="$OCAMLYACC" CAMLYACC="$OCAMLYACC" \
