@@ -21,9 +21,9 @@ ZIG=zig
 EXTRA_CONFIG_OPTS=
 OCAML_VERSION=5.2
 
-usage () { echo "$0 -p <prefix> -o <host_switch> -g <host_target> [-c <cpu count>] [-s <sources_dir>] [-z <path_to_zig_executable>] [-a <extra-config-opts>] -v <ocaml_version>"; exit 1; }
+usage () { echo "$0 -p <prefix> -o <host_switch> -g <zig_target> -t <ocaml_target> [-c <cpu count>] [-s <sources_dir>] [-z <path_to_zig_executable>] [-a <extra-config-opts>] -v <ocaml_version>"; exit 1; }
 
-while getopts ":hp:t:c:s:z:g:o:a:v:" option; do
+while getopts ":hp:t:c:s:z:g:o:a:v:t:" option; do
   case $option in
     p)
       PREFIX=${OPTARG}
@@ -43,7 +43,10 @@ while getopts ":hp:t:c:s:z:g:o:a:v:" option; do
       OCAML_VERSION=${OPTARG}
       ;;
     g)
-      HOST_TARGET=${OPTARG}
+      ZIG_TARGET=${OPTARG}
+      ;;
+    t)
+      OCAML_TARGET=${OPTARG}
       ;;
     o)
       HOST_SWITCH=${OPTARG}
@@ -63,7 +66,8 @@ echo "----------"
 echo ""
 echo "Prefix: ${PREFIX}"
 echo "Cores: ${CPU_COUNT}"
-echo "Host Target: ${HOST_TARGET}"
+echo "Zig Target: ${ZIG_TARGET}"
+echo "OCaml Target: ${OCAML_TARGET}"
 echo "Zig Compiler: ${ZIG}"
 echo "Host Switch: ${HOST_SWITCH}"
 echo "Sources Dir: ${SOURCE_DIR}"
@@ -241,18 +245,18 @@ prefix_native="$PREFIX"
 [ "$machine" = "Cygwin" ] && prefix_native=$(cygpath -m "$PREFIX")
 ln_use="ln -s "
 [ "$machine" = "Cygwin" ] && ln_use="cp "
-echo "configuring with --host=${OCAML_HOST_TARGET} --prefix=${prefix_native} ${EXTRA_CONFIG_OPTS}"
+echo "configuring with --host=${OCAML_TARGET} --prefix=${prefix_native} ${EXTRA_CONFIG_OPTS}"
 export "PATH=$PREFIX/bin:$PATH"
 # FIXME: patch configure to ignore flexlink when the host triplet is not Cygwin/MingW 
-./configure --host=${OCAML_HOST_TARGET} --prefix="$prefix_native" --disable-ocamldoc --disable-stdlib-manpages --disable-ocamltest --disable-ocamldebug \
-  ${EXTRA_CONFIG_OPTS} \
-  -C "CC=${HOST_TARGET}-target-cc" \
-  "AR=${HOST_TARGET}-target-ar" \
-  "RANLIB=${ZIG} ranlib -target ${HOST_TARGET}" \
-  "ASPP=${HOST_TARGET}-target-aspp" \
-  "MIN64CC=${HOST_TARGET}-target-cc" \
-  "PARTIALLD=${HOST_TARGET}-target-cc -r " \
-  "LD=${HOST_TARGET}-target-cc" \
+./configure --host=${OCAML_TARGET} --prefix="$prefix_native" --disable-ocamldoc --disable-stdlib-manpages --disable-ocamltest --disable-ocamldebug \
+  ${EXTRA_CONFIG_OPTS} \ 
+  -C "CC=${ZIG_TARGET}-target-cc" \
+  "AR=${ZIG_TARGET}-target-ar" \
+  "RANLIB=${ZIG} ranlib -target ${ZIG_TARGET}" \
+  "ASPP=${ZIG_TARGET}-target-aspp" \
+  "MIN64CC=${ZIG_TARGET}-target-cc" \
+  "PARTIALLD=${ZIG_TARGET}-target-cc -r " \
+  "LD=${ZIG_TARGET}-target-cc" \
   "LN=${ln_use}"
 
 # Set up sak compiler
@@ -349,7 +353,7 @@ make_target otherlibraries otherlibrariesopt ocamltoolsopt \
 
 # build the compiler shared libraries with the target `zstd.npic.o`
 cp Makefile.config.bak Makefile.config
-echo "SAK_CC=${HOST_TARGET}-target-cc" >> Makefile.config
+echo "SAK_CC=${ZIG_TARGET}-target-cc" >> Makefile.config
 make_target compilerlibs/ocamlcommon.cmxa \
             compilerlibs/ocamlbytecomp.cmxa \
             compilerlibs/ocamloptcomp.cmxa 
