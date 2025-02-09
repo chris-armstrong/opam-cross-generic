@@ -17,12 +17,14 @@ while getopts ":hp:t:c:s:z:g:o:a:" option; do
   case $option in
     p)
       PREFIX=${OPTARG}
+      [ "$machine" = "Cygwin" ] && PREFIX=$(cygpath "$PREFIX")
       ;;
     c)
       CPU_COUNT=${OPTARG}
       ;;
     s)
       SOURCE_DIR=${OPTARG}
+      [ "$machine" = "Cygwin" ] && SOURCE_DIR=$(cygpath "$SOURCE_DIR")
       ;;
     z)
       ZIG=${OPTARG}
@@ -32,6 +34,7 @@ while getopts ":hp:t:c:s:z:g:o:a:" option; do
       ;;
     o)
       HOST_SWITCH=${OPTARG}
+      [ "$machine" = "Cygwin" ] && HOST_SWITCH=$(cygpath "$HOST_SWITCH")
       ;;
     t)
       OCAML_HOST_TARGET=${OPTARG}
@@ -160,7 +163,7 @@ build_root_native=$BUILD_ROOT
 # -- target ocaml compiler wrapper scripts (stored in temporary directory)
 target_ocamlc_wrapper=$(mktemp -t target-ocamlc-XXXXX)
 make_wrapper "$target_ocamlc_wrapper" "$build_root_native/ocamlc.opt -I $build_root_native/stdlib -I $build_root_native/otherlibs/unix -I ${HOST_SWITCH}/lib/ocaml/stublibs -nostdlib " # trailing space is important
- make_windows_cmd_wrapper "$target_ocamlc_wrapper"
+make_windows_cmd_wrapper "$target_ocamlc_wrapper"
 
 target_ocamlopt_wrapper=$(mktemp -t target-ocamlopt-XXXXX)
 make_wrapper "$target_ocamlopt_wrapper" "$build_root_native/ocamlopt.opt -I $build_root_native/stdlib -I $build_root_native/otherlibs/unix -nostdlib " # trailing space is important
