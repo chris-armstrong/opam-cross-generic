@@ -194,12 +194,12 @@ host_cflags=$(get_host_variable "CFLAGS")
 host_c_libraries=$(get_host_variable "LDFLAGS")
 #host_cppflags=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^ocamlc_cppflags:" | sed -e 's/ocamlc_cppflags: //')
 host_cppflags=$(get_host_variable "CPPFLAGS")
-windows_unicode="$("$HOST_SWITCH/bin/ocamlc" -config | grep "^windows_unicode: " | sed -e "s/windows_unicode: //")"
+windows_unicode="$("$HOST_SWITCH/bin/ocamlc" -config | grep "^windows_unicode: " | sed -e 's/windows_unicode: \(true\|false\)/\1/')"
 echo "--- host_cc=${host_cc}"
 echo "--- host_cflags=${host_cflags}"
 echo "--- host_c_libraries=${host_c_libraries}"
 echo "--- host_cppflags=${host_cppflags}"
-echo "--- windows_unicode=${windows_unicode}"
+echo "--- windows_unicode=${windows_unicode}'"
 
 echo "--- Clean all configuration and previous builds"
 cd "${BUILD_ROOT}"
