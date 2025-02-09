@@ -150,11 +150,13 @@ BUILD_ROOT=${SOURCE_DIR}
 host_compiler_path="$BUILD_ROOT/host-bin"
 mkdir -p "$host_compiler_path"
 host_ocamlc_wrapper="$host_compiler_path/host-ocamlc"
-make_wrapper "$host_ocamlc_wrapper" "$HOST_SWITCH/bin/ocamlc.opt -I ${HOST_SWITCH}/lib/ocaml -I ${HOST_SWITCH}/lib/ocaml/stublibs -I +unix -nostdlib "
+host_switch_native="$HOST_SWITCH"
+[ "$machine" = "Cygwin" ] && host_switch_native=$(cygpath -m "$host_switch_native")
+make_wrapper "$host_ocamlc_wrapper" "$host_switch_native/bin/ocamlc.opt -I ${host_switch_native}/lib/ocaml -I ${host_switch_native}/lib/ocaml/stublibs -I +unix -nostdlib "
 make_windows_cmd_wrapper "$host_ocamlc_wrapper"
 
 host_ocamlopt_wrapper="$host_compiler_path/host-ocamlopt"
-make_wrapper "$host_ocamlopt_wrapper" "${HOST_SWITCH}/bin/ocamlopt.opt -I ${HOST_SWITCH}/lib/ocaml -I +unix -nostdlib "
+make_wrapper "$host_ocamlopt_wrapper" "${host_switch_native}/bin/ocamlopt.opt -I ${host_switch_native}/lib/ocaml -I +unix -nostdlib "
 make_windows_cmd_wrapper "$host_ocamlopt_wrapper"
 
 # Anchor the BUILD_ROOT with a native (windows) path that works outside cygwin
@@ -163,7 +165,7 @@ build_root_native=$BUILD_ROOT
 
 # -- target ocaml compiler wrapper scripts (stored in temporary directory)
 target_ocamlc_wrapper=$(mktemp -t target-ocamlc-XXXXX)
-make_wrapper "$target_ocamlc_wrapper" "$build_root_native/ocamlc.opt -I $build_root_native/stdlib -I $build_root_native/otherlibs/unix -I ${HOST_SWITCH}/lib/ocaml/stublibs -nostdlib " # trailing space is important
+make_wrapper "$target_ocamlc_wrapper" "$build_root_native/ocamlc.opt -I $build_root_native/stdlib -I $build_root_native/otherlibs/unix -I ${host_switch_native}/lib/ocaml/stublibs -nostdlib " # trailing space is important
 make_windows_cmd_wrapper "$target_ocamlc_wrapper"
 
 target_ocamlopt_wrapper=$(mktemp -t target-ocamlopt-XXXXX)
