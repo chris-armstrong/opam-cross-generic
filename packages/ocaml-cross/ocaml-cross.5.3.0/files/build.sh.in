@@ -194,10 +194,12 @@ host_cflags=$(get_host_variable "CFLAGS")
 host_c_libraries=$(get_host_variable "LDFLAGS")
 #host_cppflags=$( "$HOST_SWITCH/bin/ocamlc" -config | grep "^ocamlc_cppflags:" | sed -e 's/ocamlc_cppflags: //')
 host_cppflags=$(get_host_variable "CPPFLAGS")
+windows_unicode="$("$HOST_SWITCH/bin/ocamlc" -config | grep "^windows_unicode: " | sed -e "s/windows_unicode: //")"
 echo "--- host_cc=${host_cc}"
 echo "--- host_cflags=${host_cflags}"
 echo "--- host_c_libraries=${host_c_libraries}"
 echo "--- host_cppflags=${host_cppflags}"
+echo "--- windows_unicode=${windows_unicode}"
 
 echo "--- Clean all configuration and previous builds"
 cd "${BUILD_ROOT}"
@@ -229,14 +231,12 @@ export "PATH=$PREFIX/bin:$PATH"
 
 # Set up sak compiler
 cp Makefile.config Makefile.config.bak
-if [ "$machine" = "MinGW" ] || [ "$machine" = "Cygwin" ]
+echo "SAK_CC=${ZIG} cc" >> Makefile.config # fuck it lets just use zig because x86_64-w64-mingw32-gcc wants to be broken on Windows
+echo 'SAK_CFLAGS=$(OC_CFLAGS) $(OC_CPPFLAGS)' >> Makefile.config
+if [ "$windows_unicode" = "true" ]
 then
-  echo "SAK_CC=${ZIG} cc" >> Makefile.config # fuck it lets just use zig because x86_64-w64-mingw32-gcc wants to be broken on Windows
-  echo 'SAK_CFLAGS=$(OC_CFLAGS) $(OC_CPPFLAGS)' >> Makefile.config
-  echo "SAK_LINK=\$(SAK_CC) \$(SAK_CFLAGS) \$(OUTPUTEXE)\$(1) \$(2)" >> Makefile.config
-else
-  echo "SAK_CC=${host_cc}" >> Makefile.config
-  echo "SAK_CFLAGS=${host_cflags} ${host_cppflags}" >> Makefile.config
+  echo "SAK_LINK=\$(SAK_CC) -municode \$(SAK_CFLAGS) \$(OUTPUTEXE)\$(1) \$(2)" >> Makefile.config
+else 
   echo "SAK_LINK=\$(SAK_CC) \$(SAK_CFLAGS) \$(OUTPUTEXE)\$(1) \$(2)" >> Makefile.config
 fi
 #echo "MIN64CC=${host_cc}" >> Makefile.config
