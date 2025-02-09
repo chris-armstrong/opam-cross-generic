@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+set -eux
 
 # determine runtime machine
 unameOut=$(uname -s)
@@ -172,7 +172,7 @@ get_host_variable () {
 # 
 # retrieve variable from `ocamlc -config` of host switch
 get_host_ocamlc_variable () {
-  trim "$("$("$HOST_SWITCH/bin/ocamlc" -config | grep "^$1:" | cut -d ':' -f 2)")"
+  trim "$("$HOST_SWITCH/bin/ocamlc" -config | grep "^$1:" | cut -d ':' -f 2)"
 }
 
 # ###############################
@@ -248,8 +248,8 @@ ln_use="ln -s "
 echo "configuring with --host=${OCAML_TARGET} --prefix=${prefix_native} ${EXTRA_CONFIG_OPTS}"
 export "PATH=$PREFIX/bin:$PATH"
 # FIXME: patch configure to ignore flexlink when the host triplet is not Cygwin/MingW 
-./configure --host=${OCAML_TARGET} --prefix="$prefix_native" --disable-ocamldoc --disable-stdlib-manpages --disable-ocamltest --disable-ocamldebug \
-  ${EXTRA_CONFIG_OPTS} \ 
+./configure --host="${OCAML_TARGET}" --prefix="$prefix_native" --disable-ocamldoc --disable-stdlib-manpages --disable-ocamltest --disable-ocamldebug \
+  ${EXTRA_CONFIG_OPTS} \
   -C "CC=${ZIG_TARGET}-target-cc" \
   "AR=${ZIG_TARGET}-target-ar" \
   "RANLIB=${ZIG} ranlib -target ${ZIG_TARGET}" \
