@@ -2,6 +2,16 @@
 
 set -e
 
+unameOut=$(uname -s)
+case "$unameOut" in
+    Linux*)     machine=Linux;;
+    Darwin*)    machine=Mac;;
+    CYGWIN*)    machine=Cygwin;;
+    MINGW*)     machine=MinGW;;
+    MSYS_NT*)   machine=MSys;;
+    *)          machine="UNKNOWN:${unameOut}"
+esac
+
 PREFIX=
 CPU_COUNT=4
 SOURCE_DIR=$(realpath "${PWD}")
@@ -88,15 +98,6 @@ then
   exit 1
 fi
 
-unameOut=$(uname -s)
-case "$unameOut" in
-    Linux*)     machine=Linux;;
-    Darwin*)    machine=Mac;;
-    CYGWIN*)    machine=Cygwin;;
-    MINGW*)     machine=MinGW;;
-    MSYS_NT*)   machine=MSys;;
-    *)          machine="UNKNOWN:${unameOut}"
-esac
 
 # Make a shell wrapper for $2 that passes its arguments appended
 # to the end, stored in $1
