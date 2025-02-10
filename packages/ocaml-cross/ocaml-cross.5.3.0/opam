@@ -73,7 +73,6 @@ build: [
     "-v" "5.3"
   ]
 ]
-substs: [ "build.sh" ]
 install: [ "sh" "install.sh" "%{prefix}%/cross-sysroot" "%{prefix}%" "cross"]
 url {
   src: "https://github.com/ocaml/ocaml/releases/download/5.3.0/ocaml-5.3.0.tar.gz"
