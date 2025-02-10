@@ -135,7 +135,7 @@ make_windows_cmd_wrapper() {
   if [ "$machine" = "Cygwin" ]
   then
     wrapper_script_path=$1
-    cmd_script_path=$(dirname "$1")/$(basename "$1").cmd
+    cmd_script_path="$(dirname "$1")/$(basename "$1").cmd"
     cat << EOF > "$cmd_script_path"
 @echo off
 setlocal
@@ -151,7 +151,6 @@ for /f "delims=" %%A in ('%_CYGBIN%cygpath.exe "%~dpn0"') do set _CYGSCRIPT=%%A
 :: Throw away temporary env vars and invoke script, passing any args that were passed to us
 endlocal & %_CYGBIN%bash "%_CYGSCRIPT%" %*
 EOF
-    sed -i 's/$/\r/g' "$cmd_script_path"
   fi
 }
 
