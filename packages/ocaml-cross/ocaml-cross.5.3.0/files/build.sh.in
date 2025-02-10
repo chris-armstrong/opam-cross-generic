@@ -151,6 +151,7 @@ for /f "delims=" %%A in ('%_CYGBIN%cygpath.exe "%~dpn0"') do set _CYGSCRIPT=%%A
 :: Throw away temporary env vars and invoke script, passing any args that were passed to us
 endlocal & %_CYGBIN%bash "%_CYGSCRIPT%" %*
 EOF
+    sed -i 's/$/\r/g' "$cmd_script_path"
   fi
 }
 
