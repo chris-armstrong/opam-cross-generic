@@ -328,8 +328,8 @@ make_target () {
 
   make_caml \
     BUILD_ROOT="$build_root_native" \
-    TARGET_OCAMLC="$TARGET_OCAMLC" \
-    TARGET_OCAMLOPT="$TARGET_OCAMLOPT" \
+    CAMLC="$CAMLC" \
+    CAMLOPT="$CAMLOPT" \
     "$@"
 }
 echo "---- MAKING HOST ----"
