@@ -18,17 +18,18 @@ case "$unameOut" in
 esac
 
 mkdir -p "$PREFIX"
+[ "$machine" = "Cygwin" ] && PREFIX=$(cygpath "$PREFIX")
+[ "$machine" = "Cygwin" ] && HOST_SWITCH=$(cygpath "$HOST_SWITCH")
+	
 if [ ! -d "${PREFIX}" ]
 then
-        [ "$machine" = "Cygwin" ] && PREFIX=$(cygpath "$PREFIX")
-	echo "Prefix directory \"$PREFIX\" is not a directory / does not exist"
+        echo "Prefix directory \"$PREFIX\" is not a directory / does not exist"
 	exit 1
 fi
 
 if [ ! -d "${HOST_SWITCH}" ]
 then
-        [ "$machine" = "Cygwin" ] && HOST_SWITCH=$(cygpath "$HOST_SWITCH")
-	echo "Host switch directory \"$HOST_SWITCH\" does not exist"
+       echo "Host switch directory \"$HOST_SWITCH\" does not exist"
 	exit 1
 fi
 
