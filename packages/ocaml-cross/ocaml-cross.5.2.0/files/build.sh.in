@@ -151,6 +151,7 @@ for /f "delims=" %%A in ('%_CYGBIN%cygpath.exe "%~dpn0"') do set _CYGSCRIPT=%%A
 :: Throw away temporary env vars and invoke script, passing any args that were passed to us
 endlocal & %_CYGBIN%bash "%_CYGSCRIPT%" %*
 EOF
+    sed -i 's/$/\r/g' "$cmd_script_path"
   fi
 }
 
@@ -222,6 +223,10 @@ if [ "$(get_host_ocamlc_variable "function_sections")" != "true" ]
 then
 	EXTRA_CONFIG_OPTS="${EXTRA_CONFIG_OPTS} --disable-function-sections"
   echo "--- function sections disabled on host, disabling for target"
+fi
+if [ "$machine" = "Cygwin" ] || [ "$machine" = "MinGW" ]
+then
+  EXTRA_CONFIG_OPTS="${EXTRA_CONFIG_OPTS} --with-flexdll=${HOST_SWITCH}/share/flexdll "
 fi
 
 echo "--- transposing host compiler configuration"
