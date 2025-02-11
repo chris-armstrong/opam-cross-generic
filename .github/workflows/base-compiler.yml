@@ -73,8 +73,10 @@ jobs:
           HOST_TARGET: aarch64-linux-gnu
           ZIG_PATH: zig
       - name: validate zig works
-        if: ${{ runner.os != 'MacOS' }}
+        if: ${{ runner.os != 'macOS' }}
+        shell: bash
         run: |
+          eval $(opam env)
           echo "#include <stdio.h>\nint main() { return 0; }" > test.c
           export PATH=$PATH:$OPAM_SWITCH_PREFIX/bin
           aarch64-linux-gnu-target-cc -o test test.c
