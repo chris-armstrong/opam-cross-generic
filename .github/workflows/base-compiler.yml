@@ -73,7 +73,7 @@ jobs:
           HOST_TARGET: aarch64-linux-gnu
           ZIG_PATH: zig
       - name: validate zig works
-        if: ${{ runner.os != 'macOS' }}
+        if: ${{ runner.os != 'windows' }}
         shell: bash
         run: |
           eval $(opam env)
