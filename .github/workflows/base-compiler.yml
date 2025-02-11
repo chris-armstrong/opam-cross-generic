@@ -68,11 +68,6 @@ jobs:
         run: opam repo add cross .
       - name: configure and install x86-64-linux-gnu cross
         run: opam install conf-ocaml-cross conf-zig-wrapper
-        with:
-          name: config artifacts
-          path: |
-            config.log
-            config.cache
         env:
           HOST_TRIPLE: aarch64-linux-gnu
           HOST_TARGET: aarch64-linux-gnu
