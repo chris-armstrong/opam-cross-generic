@@ -1,7 +1,6 @@
 name: Builds, tests & co
 
 on:
-  - push
   - pull_request
 
 permissions: read-all
@@ -14,7 +13,6 @@ jobs:
         os:
           - ubuntu-latest
           # - macos-latest
-          # - windows-latest
 
     runs-on: ${{ matrix.os }}
 
