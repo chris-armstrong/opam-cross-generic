@@ -72,6 +72,12 @@ jobs:
           HOST_TRIPLE: aarch64-linux-gnu
           HOST_TARGET: aarch64-linux-gnu
           ZIG_PATH: zig
+      - name: validate zig works
+        if: ${{ runner.os != 'MacOS' }}
+        run: |
+          echo "#include <stdio.h>\nint main() { return 0; }" > test.c
+          export PATH=$PATH:$OPAM_SWITCH_PREFIX/bin
+          aarch64-linux-gnu-target-cc -o test test.c
       - name: install compiler
         run: "opam install ocaml-cross --verbose"
         
