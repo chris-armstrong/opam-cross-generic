@@ -1,7 +1,10 @@
 name: Builds, tests & co
 
 on:
-  - pull_request
+  pull_request:
+    branches: [main]
+  push: 
+    branches: [main]
 
 permissions: read-all
 
@@ -45,7 +48,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          # - macos-latest
+          - macos-latest
           - windows-latest
 
     runs-on: ${{ matrix.os }}
@@ -69,7 +72,15 @@ jobs:
           HOST_TRIPLE: aarch64-linux-gnu
           HOST_TARGET: aarch64-linux-gnu
           ZIG_PATH: zig
+      - name: validate zig works
+        if: ${{ runner.os != 'windows' }}
+        shell: bash
+        run: |
+          eval $(opam env)
+          { echo "#include <stdio.h>"; echo "int main() { return 0; }"; } > test.c
+          export PATH=$PATH:$OPAM_SWITCH_PREFIX/bin
+          aarch64-linux-gnu-target-cc -o test test.c
       - name: install compiler
-        run: opam install ocaml-cross --verbose 
-
+        run: "opam install ocaml-cross --verbose"
+        
           
