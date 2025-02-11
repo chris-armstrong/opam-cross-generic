@@ -267,7 +267,7 @@ export "PATH=$PREFIX/bin:$PATH"
   "MIN64CC=${ZIG_TARGET}-target-cc" \
   "PARTIALLD=${ZIG_TARGET}-target-cc -r " \
   "LD=${ZIG_TARGET}-target-cc" \
-  "LN=${ln_use}"
+  "LN=${ln_use}" || { echo " --- configure failed!"; cat config.log; exit 1; }
 
 # Set up sak compiler
 cp Makefile.config Makefile.config.bak
