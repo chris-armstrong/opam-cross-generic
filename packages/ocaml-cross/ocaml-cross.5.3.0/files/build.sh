@@ -123,7 +123,7 @@ NEW_ARGS=""
 for ARG in "\$@"; do NEW_ARGS="\$NEW_ARGS \"\$ARG\""; done
 eval "${caml_bin} \$NEW_ARGS"
 EOF
-  chmod u+x "$wrapper_script_path"
+  chmod +x "$wrapper_script_path"
 }
 
 # make_windows_cmd_wrapper <script_path>
