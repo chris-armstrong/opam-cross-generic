@@ -73,7 +73,6 @@ jobs:
           HOST_TARGET: aarch64-linux-gnu
           ZIG_PATH: zig
       - name: install compiler
-        run:
-          - "export ZIG_GLOBAL_CACHE_DIR=$HOME/zig-global-cache && mkdir -p $ZIG_GLOBAL_CACHE_DIR && opam install ocaml-cross --verbose"
+        run: "export ZIG_GLOBAL_CACHE_DIR=$HOME/zig-global-cache mkdir -p $ZIG_GLOBAL_CACHE_DIR && opam install ocaml-cross --verbose"
         
           
