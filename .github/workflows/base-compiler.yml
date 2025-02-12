@@ -39,7 +39,7 @@ jobs:
           HOST_TARGET: aarch64-linux-gnu
           ZIG_PATH: zig
       - name: install compiler
-        run: opam install ocaml-cross --verbose 
+        run: opam install ocaml-cross.5.2.0 --verbose 
 
           
   aarch64-linux-gnu_5_3:
@@ -81,7 +81,7 @@ jobs:
           export PATH=$PATH:$OPAM_SWITCH_PREFIX/bin
           aarch64-linux-gnu-target-cc -o test test.c
       - name: install compiler
-        run: opam install ocaml-cross --verbose 
+        run: opam install ocaml-cross.5.3.0 --verbose 
           
   x86_64-w64-mingw32_5_3:
     strategy:
@@ -114,4 +114,4 @@ jobs:
           HOST_TARGET: x86_64-windows-gnu # zig has a different conception of this target
           ZIG_PATH: zig
       - name: install compiler
-        run: opam install ocaml-cross --verbose 
+        run: opam install ocaml-cross.5.3.0 --verbose 
