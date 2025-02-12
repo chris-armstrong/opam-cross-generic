@@ -45,7 +45,7 @@ depends: [
   "ocaml-option-bytecode-only" {arch != "arm64" & arch != "x86_64" & arch != "s390x" & arch != "riscv64" & arch != "ppc64"}
 
   # Support Packages
-  "flexdll" {>= "0.42" & os = "win32"}
+  "flexdll" {>= "0.42" & (os = "win32" | conf-ocaml-cross:host_triple = "x86_64-w64-mingw32") }
 
   "conf-ocaml-cross"
   "conf-zig-wrapper"
@@ -81,7 +81,7 @@ url {
 extra-files: [
   [ "build.sh" "sha256=8e7dedd5f2cd9a68dc3da6826c5da3370c64fdb4e9bbd99db11aa738809cc1d8" ]
   [ "install.sh" "sha256=99ab924fbd2821b81779395294b2254ed7ae791d64f48b66dcfdf8eaec8f64ad" ]
-  [ "cross_5_3.patch" "sha256=1c5efb9285f5bea631783ce3ea5282aa67d13ec1aacc181f2ecd416152903c0d" ]
+  [ "cross_5_3.patch" "sha256=a65899d6ec53f166963d6b11b08eda7b571b729b6b25a03034451160a229896c" ]
 ]
 extra-source "ocaml-cross.install" {
   src:
