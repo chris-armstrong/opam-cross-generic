@@ -72,7 +72,7 @@ jobs:
       - name: install compiler
         run: opam install ocaml-cross --verbose 
           
-  aarch64-linux-gnu_5_3:
+  x86_64-w64-mingw32_5_3:
     strategy:
       fail-fast: false
       matrix:
