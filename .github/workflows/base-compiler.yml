@@ -111,7 +111,7 @@ jobs:
         run: opam install conf-ocaml-cross conf-zig-wrapper
         env:
           HOST_TRIPLE: x86_64-w64-mingw32
-          HOST_TARGET: x86_64-w64-mingw32
+          HOST_TARGET: x86_64-windows-gnu # zig has a different conception of this target
           ZIG_PATH: zig
       - name: install compiler
         run: opam install ocaml-cross --verbose 
