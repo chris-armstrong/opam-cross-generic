@@ -334,11 +334,14 @@ make_host () {
   ZSTD_LIBS=
   if [ "$has_zstd" = "true" ]
   then
-    ZSTD_LIBS=" -lzstd "
+    ZSTD_LIBS="-lzstd "
   fi
+  MIN64CC="${ZIG_TARGET}-target-cc"
   make_caml \
-    NATDYNLINK="$NATDYNLINK" NATDYNLINKOPTS="$NATDYNLINKOPTS" ZSTD_LIBS="${ZSTD_LIBS}" \
-    MIN64CC="${ZIG_TARGET}-target-cc" \
+    NATDYNLINK="$NATDYNLINK" \
+    NATDYNLINKOPTS="$NATDYNLINKOPTS" \
+    ZSTD_LIBS="${ZSTD_LIBS}" \
+    MIN64CC="$MIN64CC" \
     "$@"
 }
 
@@ -349,11 +352,12 @@ make_target () {
   CAMLOPT="${target_ocamlopt_wrapper}"
   [ "$machine" = "Cygwin" ] && CAMLOPT=$(cygpath -m "$CAMLOPT")
 
+  MIN64CC="${ZIG_TARGET}-target-cc"
   make_caml \
     BUILD_ROOT="$build_root_native" \
     CAMLC="$CAMLC" \
     CAMLOPT="$CAMLOPT" \
-    MIN64CC="${ZIG_TARGET}-target-cc" \
+    MIN64CC="$MIN64CC" \
     "$@"
 }
 echo "---- MAKING HOST ----"
