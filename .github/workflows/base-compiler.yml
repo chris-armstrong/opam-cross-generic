@@ -107,6 +107,9 @@ jobs:
           ocaml-compiler: 5.3.0
       - name: add repository
         run: opam repo add cross .
+      - name: install mingw32 binutils
+        run: |
+          apt install -y binutils-mingw-w64
       - name: configure and install x86_64-w64-mingw32 cross
         run: opam install conf-ocaml-cross conf-zig-wrapper
         env:
