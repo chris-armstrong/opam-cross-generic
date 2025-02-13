@@ -20,8 +20,9 @@ HOST_SWITCH=
 ZIG=zig
 EXTRA_CONFIG_OPTS=
 OCAML_VERSION=5.2
+FLEXDLL_PATH=
 
-usage () { echo "$0 -p <prefix> -o <host_switch> -g <zig_target> -t <ocaml_target> [-c <cpu count>] [-s <sources_dir>] [-z <path_to_zig_executable>] [-a <extra-config-opts>] -v <ocaml_version>"; exit 1; }
+usage () { echo "$0 -p <prefix> -o <host_switch> -g <zig_target> -t <ocaml_target> [-c <cpu count>] [-s <sources_dir>] [-z <path_to_zig_executable>] [-a <extra-config-opts>] -f <flexdll_path> -v <ocaml_version>"; exit 1; }
 
 while getopts ":hp:t:c:s:z:g:o:a:v:t:" option; do
   case $option in
@@ -55,6 +56,9 @@ while getopts ":hp:t:c:s:z:g:o:a:v:t:" option; do
     a)
       EXTRA_CONFIG_OPTS=${OPTARG}
       ;;
+    f)
+      FLEXDLL_PATH=${OPTARG}
+      ;;
     h | *)
       usage
     ;;
@@ -72,6 +76,7 @@ echo "Zig Compiler: ${ZIG}"
 echo "Host Switch: ${HOST_SWITCH}"
 echo "Sources Dir: ${SOURCE_DIR}"
 echo "OCaml Version: ${OCAML_VERSION}"
+echo "Flexdll path: ${FLEXDLL_PATH}"
 
 if [ -z "${PREFIX}" ]
 then
@@ -220,8 +225,14 @@ make_windows_cmd_wrapper "$target_ocamlopt_wrapper"
 # Disable function sections if the build machine doesn't support it
 if [ "$(get_host_ocamlc_variable "function_sections")" != "true" ]
 then
-	EXTRA_CONFIG_OPTS="${EXTRA_CONFIG_OPTS} --disable-function-sections"
+  EXTRA_CONFIG_OPTS="${EXTRA_CONFIG_OPTS} --disable-function-sections"
   echo "--- function sections disabled on host, disabling for target"
+fi
+
+if [ $(expr "$OCAML_TARGET" : "^x86_64-w64-") > 0 ]
+then
+  echo "--- x86_64-w64-* target means we need flexdll"
+  EXTRA_CONFIG_OPTS="${EXTRA_CONFIG_OPTS} --with-flexdll=${FLEXDLL_PATH}"
 fi
 
 echo "--- transposing host compiler configuration"
