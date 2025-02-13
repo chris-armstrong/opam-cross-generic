@@ -20,10 +20,11 @@ HOST_SWITCH=
 ZIG=zig
 EXTRA_CONFIG_OPTS=
 OCAML_VERSION=5.2
+FLEXDLL_PATH=
 
-usage () { echo "$0 -p <prefix> -o <host_switch> -g <zig_target> -t <ocaml_target> [-c <cpu count>] [-s <sources_dir>] [-z <path_to_zig_executable>] [-a <extra-config-opts>] -v <ocaml_version>"; exit 1; }
+usage () { echo "$0 -p <prefix> -o <host_switch> -g <zig_target> -t <ocaml_target> [-c <cpu count>] [-s <sources_dir>] [-z <path_to_zig_executable>] [-a <extra-config-opts>] -f <flexdll_path> -v <ocaml_version>"; exit 1; }
 
-while getopts ":hp:t:c:s:z:g:o:a:v:t:" option; do
+while getopts ":hp:t:c:s:z:g:o:a:v:t:f:" option; do
   case $option in
     p)
       PREFIX=${OPTARG}
@@ -55,6 +56,9 @@ while getopts ":hp:t:c:s:z:g:o:a:v:t:" option; do
     a)
       EXTRA_CONFIG_OPTS=${OPTARG}
       ;;
+    f)
+      FLEXDLL_PATH=${OPTARG}
+      ;;
     h | *)
       usage
     ;;
@@ -72,6 +76,7 @@ echo "Zig Compiler: ${ZIG}"
 echo "Host Switch: ${HOST_SWITCH}"
 echo "Sources Dir: ${SOURCE_DIR}"
 echo "OCaml Version: ${OCAML_VERSION}"
+echo "Flexdll path: ${FLEXDLL_PATH}"
 
 if [ -z "${PREFIX}" ]
 then
@@ -123,7 +128,7 @@ NEW_ARGS=""
 for ARG in "\$@"; do NEW_ARGS="\$NEW_ARGS \"\$ARG\""; done
 eval "${caml_bin} \$NEW_ARGS"
 EOF
-  chmod u+x "$wrapper_script_path"
+  chmod +x "$wrapper_script_path"
 }
 
 # make_windows_cmd_wrapper <script_path>
@@ -220,8 +225,14 @@ make_windows_cmd_wrapper "$target_ocamlopt_wrapper"
 # Disable function sections if the build machine doesn't support it
 if [ "$(get_host_ocamlc_variable "function_sections")" != "true" ]
 then
-	EXTRA_CONFIG_OPTS="${EXTRA_CONFIG_OPTS} --disable-function-sections"
+  EXTRA_CONFIG_OPTS="${EXTRA_CONFIG_OPTS} --disable-function-sections"
   echo "--- function sections disabled on host, disabling for target"
+fi
+
+if [ $(expr "$OCAML_TARGET" : "^x86_64-w64-") > 0 ]
+then
+  echo "--- x86_64-w64-* target means we need flexdll"
+  EXTRA_CONFIG_OPTS="${EXTRA_CONFIG_OPTS} --with-flexdll=${FLEXDLL_PATH}"
 fi
 
 echo "--- transposing host compiler configuration"
@@ -267,7 +278,7 @@ export "PATH=$PREFIX/bin:$PATH"
   "MIN64CC=${ZIG_TARGET}-target-cc" \
   "PARTIALLD=${ZIG_TARGET}-target-cc -r " \
   "LD=${ZIG_TARGET}-target-cc" \
-  "LN=${ln_use}"
+  "LN=${ln_use}" || { echo " --- configure failed!"; cat config.log; exit 1; }
 
 # Set up sak compiler
 cp Makefile.config Makefile.config.bak
@@ -310,6 +321,7 @@ make_caml () {
        NEW_OCAMLRUN="$OCAMLRUN" \
        CAMLC="$CAMLC" OCAMLC="$CAMLC" \
        CAMLOPT="$CAMLOPT" OCAMLOPT="$CAMLOPT" \
+       MIN64CC="$MIN64CC" \
        "$@"
 }
 
@@ -322,10 +334,14 @@ make_host () {
   ZSTD_LIBS=
   if [ "$has_zstd" = "true" ]
   then
-    ZSTD_LIBS=" -lzstd "
+    ZSTD_LIBS="-lzstd "
   fi
+  MIN64CC="${ZIG_TARGET}-target-cc"
   make_caml \
-    NATDYNLINK="$NATDYNLINK" NATDYNLINKOPTS="$NATDYNLINKOPTS" ZSTD_LIBS="${ZSTD_LIBS}" \
+    NATDYNLINK="$NATDYNLINK" \
+    NATDYNLINKOPTS="$NATDYNLINKOPTS" \
+    ZSTD_LIBS="${ZSTD_LIBS}" \
+    MIN64CC="$MIN64CC" \
     "$@"
 }
 
@@ -336,10 +352,12 @@ make_target () {
   CAMLOPT="${target_ocamlopt_wrapper}"
   [ "$machine" = "Cygwin" ] && CAMLOPT=$(cygpath -m "$CAMLOPT")
 
+  MIN64CC="${ZIG_TARGET}-target-cc"
   make_caml \
     BUILD_ROOT="$build_root_native" \
     CAMLC="$CAMLC" \
     CAMLOPT="$CAMLOPT" \
+    MIN64CC="$MIN64CC" \
     "$@"
 }
 echo "---- MAKING HOST ----"

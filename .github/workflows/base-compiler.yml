@@ -1,52 +1,96 @@
 name: Builds, tests & co
 
 on:
-  - pull_request
+  pull_request:
+    branches: [main]
+  push: 
+    branches: [main]
 
 permissions: read-all
 
 jobs:
-  aarch64-linux-gnu_5_2:
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ubuntu-latest
-          # - macos-latest
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Checkout tree
-        uses: actions/checkout@v4
-      - name: install zig
-        uses: mlugg/setup-zig@v1
-        with:
-          version: master
-      - name: Set-up OCaml
-        uses: ocaml/setup-ocaml@v3
-        with:
-          ocaml-compiler: 5.2.0
-      - name: add repository
-        run: opam repo add cross .
-      - name: configure and install x86-64-linux-gnu cross
-        run: opam install conf-ocaml-cross conf-zig-wrapper
-        env:
-          HOST_TRIPLE: aarch64-linux-gnu
-          HOST_TARGET: aarch64-linux-gnu
-          ZIG_PATH: zig
-      - name: install compiler
-        run: opam install ocaml-cross --verbose 
-
+  # aarch64-linux-gnu_5_2:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os:
+  #         - ubuntu-latest
+  #         # - macos-latest
+  #
+  #   runs-on: ${{ matrix.os }}
+  #
+  #   steps:
+  #     - name: Checkout tree
+  #       uses: actions/checkout@v4
+  #     - name: install zig
+  #       uses: mlugg/setup-zig@v1
+  #       with:
+  #         version: master
+  #     - name: Set-up OCaml
+  #       uses: ocaml/setup-ocaml@v3
+  #       with:
+  #         ocaml-compiler: 5.2.0
+  #     - name: add repository
+  #       run: opam repo add cross .
+  #     - name: configure and install x86-64-linux-gnu cross
+  #       run: opam install conf-ocaml-cross conf-zig-wrapper
+  #       env:
+  #         HOST_TRIPLE: aarch64-linux-gnu
+  #         HOST_TARGET: aarch64-linux-gnu
+  #         ZIG_PATH: zig
+  #     - name: install compiler
+  #       run: opam install ocaml-cross --verbose 
+  #
+  #         
+  # aarch64-linux-gnu_5_3:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os:
+  #         - ubuntu-latest
+  #         - macos-latest
+  #         - windows-latest
+  #
+  #   runs-on: ${{ matrix.os }}
+  #
+  #   steps:
+  #     - name: Checkout tree
+  #       uses: actions/checkout@v4
+  #     - name: install zig
+  #       uses: mlugg/setup-zig@v1
+  #       with:
+  #         version: master
+  #     - name: Set-up OCaml
+  #       uses: ocaml/setup-ocaml@v3
+  #       with:
+  #         ocaml-compiler: 5.3.0
+  #     - name: add repository
+  #       run: opam repo add cross .
+  #     - name: configure and install x86-64-linux-gnu cross
+  #       run: opam install conf-ocaml-cross conf-zig-wrapper
+  #       env:
+  #         HOST_TRIPLE: aarch64-linux-gnu
+  #         HOST_TARGET: aarch64-linux-gnu
+  #         ZIG_PATH: zig
+  #     - name: validate zig works
+  #       if: ${{ runner.os != 'windows' }}
+  #       shell: bash
+  #       run: |
+  #         eval $(opam env)
+  #         { echo "#include <stdio.h>"; echo "int main() { return 0; }"; } > test.c
+  #         export PATH=$PATH:$OPAM_SWITCH_PREFIX/bin
+  #         aarch64-linux-gnu-target-cc -o test test.c
+  #     - name: install compiler
+  #       run: opam install ocaml-cross --verbose 
           
-  aarch64-linux-gnu_5_3:
+  x86_64-w64-mingw32_5_3:
     strategy:
       fail-fast: false
       matrix:
         os:
           - ubuntu-latest
           # - macos-latest
-          - windows-latest
+          # - windows-latest
 
     runs-on: ${{ matrix.os }}
 
@@ -63,13 +107,14 @@ jobs:
           ocaml-compiler: 5.3.0
       - name: add repository
         run: opam repo add cross .
-      - name: configure and install x86-64-linux-gnu cross
+      - name: install mingw32 binutils
+        run: |
+          sudo apt install -y binutils-mingw-w64
+      - name: configure and install x86_64-w64-mingw32 cross
         run: opam install conf-ocaml-cross conf-zig-wrapper
         env:
-          HOST_TRIPLE: aarch64-linux-gnu
-          HOST_TARGET: aarch64-linux-gnu
+          HOST_TRIPLE: x86_64-w64-mingw32
+          HOST_TARGET: x86_64-windows-gnu # zig has a different conception of this target
           ZIG_PATH: zig
       - name: install compiler
         run: opam install ocaml-cross --verbose 
-
-          
