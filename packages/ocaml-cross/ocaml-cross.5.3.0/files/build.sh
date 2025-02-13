@@ -321,6 +321,7 @@ make_caml () {
        NEW_OCAMLRUN="$OCAMLRUN" \
        CAMLC="$CAMLC" OCAMLC="$CAMLC" \
        CAMLOPT="$CAMLOPT" OCAMLOPT="$CAMLOPT" \
+       MIN64CC="$MIN64CC" \
        "$@"
 }
 
@@ -337,6 +338,7 @@ make_host () {
   fi
   make_caml \
     NATDYNLINK="$NATDYNLINK" NATDYNLINKOPTS="$NATDYNLINKOPTS" ZSTD_LIBS="${ZSTD_LIBS}" \
+    MIN64CC="${ZIG_TARGET}-target-cc" \
     "$@"
 }
 
@@ -351,6 +353,7 @@ make_target () {
     BUILD_ROOT="$build_root_native" \
     CAMLC="$CAMLC" \
     CAMLOPT="$CAMLOPT" \
+    MIN64CC="${ZIG_TARGET}-target-cc" \
     "$@"
 }
 echo "---- MAKING HOST ----"
