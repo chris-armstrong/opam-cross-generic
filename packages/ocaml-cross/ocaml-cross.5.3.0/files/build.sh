@@ -24,7 +24,7 @@ FLEXDLL_PATH=
 
 usage () { echo "$0 -p <prefix> -o <host_switch> -g <zig_target> -t <ocaml_target> [-c <cpu count>] [-s <sources_dir>] [-z <path_to_zig_executable>] [-a <extra-config-opts>] -f <flexdll_path> -v <ocaml_version>"; exit 1; }
 
-while getopts ":hp:t:c:s:z:g:o:a:v:t:" option; do
+while getopts ":hp:t:c:s:z:g:o:a:v:t:f:" option; do
   case $option in
     p)
       PREFIX=${OPTARG}
