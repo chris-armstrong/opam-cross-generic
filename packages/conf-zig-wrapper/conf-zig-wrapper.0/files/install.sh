@@ -57,12 +57,12 @@ EOF
 mkdir -p "${PREFIX}/bin"
 
 zig_cc_wrapper="${PREFIX}/bin/$HOST_TARGET-target-cc"
-make_wrapper "$zig_cc_wrapper" "${ZIG} cc -target ${HOST_TARGET}"
+make_wrapper "$zig_cc_wrapper" "${ZIG} cc -v -target ${HOST_TARGET}"
 make_windows_cmd_wrapper "$zig_cc_wrapper"
 
 zig_aspp_wrapper="${PREFIX}/bin/$HOST_TARGET-target-aspp"
-make_wrapper "$zig_aspp_wrapper" "${ZIG} cc -target ${HOST_TARGET} -c"
+make_wrapper "$zig_aspp_wrapper" "${ZIG} cc -v -target ${HOST_TARGET} -c"
 make_windows_cmd_wrapper "$zig_aspp_wrapper"
 zig_ar_wrapper="${PREFIX}/bin/$HOST_TARGET-target-ar"
-make_wrapper "$zig_ar_wrapper" "${ZIG} ar"
+make_wrapper "$zig_ar_wrapper" "${ZIG} ar -v"
 make_windows_cmd_wrapper "$zig_ar_wrapper"
