@@ -57,7 +57,7 @@ EOF
 mkdir -p "${PREFIX}/bin"
 
 zig_cc_wrapper="${PREFIX}/bin/$HOST_TARGET-target-cc"
-make_wrapper "$zig_cc_wrapper" "${ZIG} cc -v -target ${HOST_TARGET}"
+make_wrapper "$zig_cc_wrapper" "sudo dtruss ${ZIG} cc -v -target ${HOST_TARGET}"
 make_windows_cmd_wrapper "$zig_cc_wrapper"
 
 zig_aspp_wrapper="${PREFIX}/bin/$HOST_TARGET-target-aspp"

@@ -4,7 +4,7 @@ install: [
   ["bash" "install.sh" "%{prefix}%" "%{conf-ocaml-cross:host_target}%" "%{conf-ocaml-cross:zig_path}%"]
 ]
 extra-files: [
-  [ "install.sh" "sha256=c55d382f0bb72c837c42f3de58fc12c9302599d4051606d7cadc0fd4b7fc5388" ]
+  [ "install.sh" "sha256=094cf798d5e45695c3e0fb78bad591b494b2d74ad57fd64c6365ca63f47c601a" ]
 ]
 synopsis:
   "Virtual package specifying ocaml-cross zig wrapper utilities configuration"
