@@ -79,7 +79,7 @@ url {
   checksum: "sha256=22c1dd9de21bf43b62d1909041fb5fad648905227bf69550a6a6bef31e654f38"
 }
 extra-files: [
-  [ "build.sh" "sha256=d7e91a3690b2e4ee8c48bed8bf0d70cbf65ba26be47677af9fcf111c0556928d" ]
+  [ "build.sh" "sha256=8e7dedd5f2cd9a68dc3da6826c5da3370c64fdb4e9bbd99db11aa738809cc1d8" ]
   [ "install.sh" "sha256=99ab924fbd2821b81779395294b2254ed7ae791d64f48b66dcfdf8eaec8f64ad" ]
   [ "cross_5_3.patch" "sha256=1c5efb9285f5bea631783ce3ea5282aa67d13ec1aacc181f2ecd416152903c0d" ]
 ]

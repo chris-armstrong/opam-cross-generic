@@ -123,7 +123,7 @@ NEW_ARGS=""
 for ARG in "\$@"; do NEW_ARGS="\$NEW_ARGS \"\$ARG\""; done
 eval "${caml_bin} \$NEW_ARGS"
 EOF
-  chmod u+x "$wrapper_script_path"
+  chmod +x "$wrapper_script_path"
 }
 
 # make_windows_cmd_wrapper <script_path>
@@ -267,7 +267,7 @@ export "PATH=$PREFIX/bin:$PATH"
   "MIN64CC=${ZIG_TARGET}-target-cc" \
   "PARTIALLD=${ZIG_TARGET}-target-cc -r " \
   "LD=${ZIG_TARGET}-target-cc" \
-  "LN=${ln_use}"
+  "LN=${ln_use}" || { echo " --- configure failed!"; cat config.log; exit 1; }
 
 # Set up sak compiler
 cp Makefile.config Makefile.config.bak
